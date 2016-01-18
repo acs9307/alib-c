@@ -1,0 +1,130 @@
+----Version 1.0.0 (1/7/2016)----
+Technically not the first version, but this is where we are starting to document verions:
+
+All '_private' files have had typedefs removed from the public object declaration because 
+older compilers will throw an error because a typedef is defined twice, once in the public 
+header file and once in the private header file.
+
+alib_string:
+    Fixed bug with 'strcpy_back()' and 'strncpy_back()'.
+    Added 'strncpy_safe()', 'strcpy_safe()', 'memcpy_back()', and 'memcpy_safe()'.
+    Added 'str_to_lower()', 'str_to_upper()', 'strn_to_lower()', and 'strn_to_upper()'.
+
+alib_file:
+	Modified some return codes to better describe errors.
+	Added/fixed comments. 
+	
+alib_sockets:
+	Modified some return codes to better describe errors.
+	Added/fixed comments. 
+
+alib_string:
+	Modified some return codes to better describe errors.
+	Added/fixed comments.
+	Modified 'strcpy_alloc()' to simply call 'strncpy_alloc()'. 
+
+alib_types:
+	Modified 'is_bool*()' functions to be more robust and have simplier logic, however efficiency
+		may not be as high as before.
+	Added 'bool' and 'byte' types for completion, however these types should NEVER be used within
+		the library, they are only here for completion.
+	Comments updated and corrected.
+
+ArrayList:
+	Modified 'delArrayList()' to use 'ArrayList_clear()' to clear the array before deleting
+		the object.  Previously used manual logic, only changed for simplicity.	
+
+BinaryBuffer:
+    NEW!
+
+ClientListener:
+	Polling removed from ClientListener, replaced with 'pthread_cond_wait()'.
+	'ClientListener_stop_when_empty()', 'ClientListener_remove()', and 
+		'ClientListener_remove_socket_package()' added to ClientListener.
+	Data_ready and data_in callbacks changed 'data' parameters to be 'void*' instead of 'char*'.		
+	Fixed/added comments.
+		
+DList:
+	NEW!
+	Designed to replace QueueObject.
+
+DListItem (Previously ListItem):
+	NEW!
+	Redesigned, but was based off the original ListItem. 
+		
+EpollPack:
+	NEW!
+		
+ErrorLogger:
+	Added several getter and setter functions.
+	Modified comments.
+	Modified 'el_truncate_ready_cb' and 'el_truncate_cb' to take two arguments, 'ErrorLogger*' 
+		and 'size_t'.  This	was needed so that a dynamic maximum file size could be used.
+		
+event_server/EventServer:
+	Renamed from 'event_server'.
+		
+FdClient:
+	Synced comments.	
+	
+FdServer:
+	Modified 'FdServer_stop()' to not join, and added new method called 'FdServer_stop_join()'
+		to act similarly to the old 'FdServer_stop()' method.  This was done so that the 
+		'FdServer_stop()' could be called within the callbacks with no ill effects.
+	Updated and synced comments.
+	Modified fscb_on_disconnect to have a 'server_cb_rval' return code.
+	
+flags:
+	Updated and synced comments. 
+	
+ListHistory:
+	Updated and synced comments. 
+	
+ListHistoryItem:
+	Modified 'delListHistoryItem()' to not return a value, would only return a bad argument 
+		value.
+	Updated and synced comments. 
+	
+ListItem:
+	Modified to be a new base class for list items. 
+	
+ListItemVal:
+	NEW!
+	Reference counted object that stores data for ListItem objects.
+	Designed to only be freed when it is no longer being refered to by anything else.
+
+MemPool:
+	Fixed possible bug with private 'expand()' function ensureing that the capacity can never be 
+		expanded past SIZE_MAX.
+	Added comments to functions.
+	Synced comments. 
+	
+ProcessThread:
+	Removed for being pointless. 
+
+proc_waiter:
+	NEW!	
+
+QueueObject:
+	REMOVED!  Use DList instead. 
+
+QueueObjectItem:
+	REMOVED!  Use DListItem instead.
+
+signal_handler:
+	NEW!
+	
+String:
+	NEW!
+	Designed to be a more efficient version of StringObject, StringObject is now depreciated.
+	
+StringObject:
+	DEPRECIATED!
+
+TcpClient:
+	Added 'tc_sockopt' callback to object.  This allows for options to be set for a socket before
+		connecting to a host. 	
+
+TcpServer:
+	Modified to use EpollPack instead of the localized 'epoll_pack'. 
+
