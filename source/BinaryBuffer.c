@@ -11,7 +11,7 @@ static void calculate_expansion(BinaryBuffer* buff, size_t* size)
 		size_t new_size = (*size > buff->max_expand) ?
 				*size + buff->max_expand : *size << 1;
 		if(new_size < *size)
-			*size = SIZE_MAX;
+			*size = ULONG_MAX;
 		else
 			*size = new_size;
 	}
@@ -67,7 +67,7 @@ alib_error BinaryBuffer_expand(BinaryBuffer* buff)
 
 	/* Ensure we can expand. */
 	if(!buff)return(ALIB_BAD_ARG);
-	if(buff->capacity == SIZE_MAX)
+	if(buff->capacity == ULONG_MAX)
 		return(ALIB_INTERNAL_MAX_REACHED);
 
 	/* Find a new buffer size for expansion. */
@@ -127,7 +127,7 @@ alib_error BinaryBuffer_resize(BinaryBuffer* buff, size_t new_size)
 alib_error BinaryBuffer_append(BinaryBuffer* buff, const void* data, size_t data_len)
 {
 	if(!buff || !data)return(ALIB_BAD_ARG);
-	if(buff->len + data_len > SIZE_MAX)return(ALIB_INTERNAL_MAX_REACHED);
+	if(buff->len + data_len > ULONG_MAX)return(ALIB_INTERNAL_MAX_REACHED);
 
 	size_t new_data_len = buff->len + data_len;
 
@@ -158,7 +158,7 @@ alib_error BinaryBuffer_insert(BinaryBuffer* buff, size_t index, const void* dat
 {
 	if(!buff || !data)return(ALIB_BAD_ARG);
 	if(index > buff->len)return(ALIB_BAD_INDEX);
-	if(buff->len + data_len > SIZE_MAX)return(ALIB_INTERNAL_MAX_REACHED);
+	if(buff->len + data_len > ULONG_MAX)return(ALIB_INTERNAL_MAX_REACHED);
 
 	size_t new_len = buff->len + data_len;
 
@@ -172,7 +172,7 @@ alib_error BinaryBuffer_insert(BinaryBuffer* buff, size_t index, const void* dat
 
 	/* Copy the memory around. */
 	memcpy_back(buff->buff + index + data_len, buff->buff + index,
-			buff->len - (index + 1));
+			buff->len - index);
 	memcpy(buff->buff + index, data, data_len);
 	buff->len = new_len;
 
@@ -458,7 +458,7 @@ void BinaryBuffer_set_min_capacity(BinaryBuffer* buff, size_t min_cap)
 }
 /* Sets the maximum number of bytes the internal buffer may expand by.
  * If 'max_expand' is set to zero, the buffer's value will be set to
- * SIZE_MAX.
+ * ULONG_MAX.
  *
  * Assumes 'buff' is not null. */
 void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand)
@@ -466,7 +466,7 @@ void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand)
 	if(max_expand)
 		buff->max_expand = max_expand;
 	else
-		buff->max_expand = SIZE_MAX;
+		buff->max_expand = ULONG_MAX;
 }
 	/***********/
 /******************************/
@@ -484,7 +484,7 @@ void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand)
  * 			for the buffer.
  * 		max_expand: (OPTIONA) The number of bytes that the buffer may expand
  * 			by per iteration.  If set to zero, then the maximum expansion will
- * 			be set to SIZE_MAX.
+ * 			be set to ULONG_MAX.
  */
 BinaryBuffer* newBinaryBuffer_ex(unsigned char* data, size_t data_len,
 		size_t start_cap, size_t min_cap, size_t max_expand)
@@ -505,7 +505,7 @@ BinaryBuffer* newBinaryBuffer_ex(unsigned char* data, size_t data_len,
 	if(max_expand)
 		buff->max_expand = max_expand;
 	else
-		buff->max_expand = SIZE_MAX;
+		buff->max_expand = ULONG_MAX;
 
 	/* Allocate internal memory. */
 	if(start_cap)

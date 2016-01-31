@@ -195,7 +195,7 @@ static alib_error expand(MemPool* pool)
 
 	new_cap = pool->array->capacity * 2;
 	if(new_cap < pool->array->capacity)
-		new_cap = SIZE_MAX;
+		new_cap = ULONG_MAX;
 
 	/* Ensure we are able to allocate the new memory. */
 	if(ArrayList_resize_tsafe(pool->array, new_cap) ==

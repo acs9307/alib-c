@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <pthread.h>
 #include <json-c/json.h>
 
@@ -109,7 +110,7 @@ ErrorLoggerTimeOption ErrorLogger_get_time_option(ErrorLogger* logger);
  * Assumes 'logger' is not null. */
 time_t ErrorLogger_get_startup_time(ErrorLogger* logger);
 /* Gets the number of times the ErrorLogger has logged an error.
- * If more than SIZE_MAX errors have been logged, then the value
+ * If more than ULONG_MAX errors have been logged, then the value
  * will be inaccurate.
  *
  * Assumes 'logger' is not null. */

@@ -150,21 +150,26 @@ long DListItem_move(DListItem* list, size_t from_index, size_t to_index)
 		to = DListItem_get_by_relative_index(from,
 				to_index - from_index, &exceeded);
 
-		/* Place 'from' after 'to'. */
-			/* Remove from old location. */
-		if(from->prev)
-			from->prev->next = from->next;
-		if(from->next)
-			from->next->prev = from->prev;
-			/* Place between 'to' and its next. */
-		from->prev = to;
-		from->next = to->next;
-		to->next = from;
-		if(from->next)
-			from->next->prev = from;
+		if(from != to)
+		{
+			/* Place 'from' after 'to'. */
+				/* Remove from old location. */
+			if(from->prev)
+				from->prev->next = from->next;
+			if(from->next)
+				from->next->prev = from->prev;
+				/* Place between 'to' and its next. */
+			from->prev = to;
+			from->next = to->next;
+			to->next = from;
+			if(from->next)
+				from->next->prev = from;
 
-		/* Check find where we placed 'to'. */
-		to_index -= exceeded;
+			/* Check find where we placed 'to'. */
+			to_index -= exceeded;
+		}
+		else
+			to_index = from_index;
 	}
 	else
 	{
@@ -174,19 +179,24 @@ long DListItem_move(DListItem* list, size_t from_index, size_t to_index)
 				&exceeded);
 			if(exceeded)return(ALIB_BAD_INDEX);
 
-		/* Place 'from' at 'to's location and set 'to' to
-		 * be after 'from'. */
+		if(from != to)
+		{
+			/* Place 'from' at 'to's location and set 'to' to
+			 * be after 'from'. */
 			/* Remove from old location. */
-		if(from->prev)
-			from->prev->next = from->next;
-		if(from->next)
-			from->next->prev = from->prev;
+			if(from->prev)
+				from->prev->next = from->next;
+			if(from->next)
+				from->next->prev = from->prev;
 			/* Place before 'to'. */
-		from->prev = to->prev;
-		from->next = to;
-		to->prev = from;
-		if(from->prev)
-			from->prev->next = from;
+			from->prev = to->prev;
+			from->next = to;
+			to->prev = from;
+			if(from->prev)
+				from->prev->next = from;
+		}
+		else
+			to_index = from_index;
 	}
 
 	return((long)to_index);

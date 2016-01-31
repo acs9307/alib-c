@@ -1,3 +1,49 @@
+----Version 1.1.0----
+Removed all SIZE_MAX and replaced with ULONG_MAX as some compilers do not include a definition 
+for SIZE_MAX.
+
+alib_error.h:
+	Added ALIB_TIMEOUT.
+	Added ALIB_FILE_FORMAT_ERR.
+	Added ALIB_TCP_RECV_ERR.
+    Added ALIB_FILE_NOT_FOUND.
+
+BinaryBuffer:
+	Fixed but with inserting data at second to last position in buffer. 
+
+ComDataCheck:
+	NEW!
+
+DListItem:
+	Recursion bug fixed with DListItem_move().  Recursion would occur if you moved an item
+		at the end of the list to the end of the list.
+
+ErrorLogger:
+	Fixed bugs with 'ErrorLogger_log_error()'.
+		Removed segment fault when a null ErrorLogger object is passed.
+		Now will log the error code.
+	Type cast the return value of 'ctime()' to 'const char*' as the Android native compiler threw
+		warnings.
+
+time.h:
+    NEW!
+
+TimerBase:
+    NEW!
+
+Timer:
+    NEW!
+
+TimerLight:
+    NEW!
+
+TcpClient:
+	Modified constructor so that a DNS host can be provided instead of just an IP address. 
+
+zip:
+	NEW!
+---------------------
+
 ----Version 1.0.0 (1/7/2016)----
 Technically not the first version, but this is where we are starting to document verions:
 
@@ -127,4 +173,4 @@ TcpClient:
 
 TcpServer:
 	Modified to use EpollPack instead of the localized 'epoll_pack'. 
-
+--------------------------------

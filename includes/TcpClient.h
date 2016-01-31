@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <inttypes.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -119,7 +120,7 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 /* Creates a new TcpClient.
  *
  * Parameters:
- * 		host_ip_addr: The c-string IP address of the host.
+ * 		host_addr: The address of the host, either IP or DNS.
  * 		port: The port of the host.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
@@ -128,7 +129,7 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
  * Returns:
  * 		NULL: Error.
  * 		TcpClient*: New TcpClient. */
-TcpClient* newTcpClient(const char* host_ip_addr, uint16_t port,
+TcpClient* newTcpClient(const char* host_addr, uint16_t port,
 		void* ex_data, alib_free_value free_data_cb);
 /* Disconnects the client and destroys the object. */
 void delTcpClient(TcpClient** client);

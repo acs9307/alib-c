@@ -3,7 +3,9 @@
 
 typedef enum alib_error
 {
-	/* Timeout was reached. */
+	ALIB_FILE_NOT_FOUND = -20,
+	ALIB_FILE_FORMAT_ERR = -19,
+	/* Operation timed out. */
 	ALIB_TIMEOUT = -18,
 	/* Given index is bad. */
 	ALIB_BAD_INDEX = -17,
@@ -12,9 +14,9 @@ typedef enum alib_error
 	ALIB_INTERNAL_MAX_REACHED = -16,
 	/* Error occurred with a thread. */
 	ALIB_THREAD_ERR = -15,
-	/* Error occurred while writing to a file. */
+	/* Error occurred while writing to a file/file descriptor. */
 	ALIB_FILE_WRITE_ERR = -14,
-	/* Error occurred while reading from a file. */
+	/* Error occurred while reading from a file/file descriptor. */
 	ALIB_FILE_READ_ERR = -13,
 	/* Could not open a particular file. */
 	ALIB_FILE_OPEN_ERR = -12,
@@ -28,6 +30,8 @@ typedef enum alib_error
 	 * still be corrupted as the object may have been able
 	 * to fix itself. */
 	ALIB_OBJ_CORRUPTION = -9,
+	/* Error occurred during a recv() operation. */
+	ALIB_TCP_RECV_ERR = -20,
 	/* Unable to send over TCP. */
 	ALIB_TCP_SEND_ERR = -8,
 	/* Unable to connect via TCP. */

@@ -1,4 +1,9 @@
-Add Timer object.
+Add gzip formatting for 'zip'.
+Add 'zip_iter'.
+
+Add 'free_array()' to alib, should work similar to del[].
+
+Add an iterator object for lists. 
 
 Add SList object (Singly Linked List). 
 

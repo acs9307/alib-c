@@ -29,4 +29,15 @@ struct BinaryBuffer
 	size_t max_expand;
 };
 
+
+/*******Private Functions*******/
+/* Private resize resizes the allocated memory to be exactly
+ * the number of bytes long received.  This differs from the public
+ * resize function in that we do not calculate whether or not the
+ * allocated space is below the object's minimum.
+ *
+ * If an error returns, memory will not have been modified. */
+alib_error BinaryBuffer_hard_resize(BinaryBuffer* buff, size_t new_size);
+/*******************************/
+
 #endif

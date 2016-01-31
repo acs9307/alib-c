@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #include "alib_error.h"
 #include "alib_string.h"
@@ -202,7 +203,7 @@ size_t BinaryBuffer_get_max_expand_size(BinaryBuffer* buff);
 void BinaryBuffer_set_min_capacity(BinaryBuffer* buff, size_t min_cap);
 /* Sets the maximum number of bytes the internal buffer may expand by.
  * If 'max_expand' is set to zero, the buffer's value will be set to
- * SIZE_MAX.
+ * ULONG_MAX.
  *
  * Assumes 'buff' is not null. */
 void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand);
@@ -222,7 +223,7 @@ void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand);
  * 			for the buffer.
  * 		max_expand: (OPTIONA) The number of bytes that the buffer may expand
  * 			by per iteration.  If set to zero, then the maximum expansion will
- * 			be set to SIZE_MAX.
+ * 			be set to ULONG_MAX.
  */
 BinaryBuffer* newBinaryBuffer_ex(unsigned char* data, size_t data_len,
 		size_t start_cap, size_t min_cap, size_t max_expand);

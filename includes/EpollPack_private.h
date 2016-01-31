@@ -1,7 +1,7 @@
 #ifndef EPOLL_PACK_PRIVATE_IS_DEFINED
 #define EPOLL_PACK_PRIVATE_IS_DEFINED
 
-#include "EpollPack.h"
+#include "EpollPack_protected.h"
 
 /* Container object used to store members related to an epoll socket.
  * The object is fully thread safe. */

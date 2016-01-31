@@ -85,7 +85,15 @@ typedef server_cb_rval (*ts_client_data_ready_cb)(TcpServer* server,
  */
 typedef server_cb_rval (*ts_client_data_in_cb)(TcpServer* server,
 		socket_package* client, char* buff, size_t buff_len);
-/* */
+/* Called whenever a client disconnects from the server.
+ *
+ * Parameters:
+ * 		server - A pointer to the calling object.
+ * 		client - The client that disconnected.
+ *
+ * Return Value Behavior:
+ * 		SCB_RVAL_STOP_SERVER - Closes all connected clients and stops the server.
+ * 		SCB_DEFAULT - Nothing. */
 typedef server_cb_rval (*ts_client_disconnected_cb)(TcpServer* server,
 		socket_package* client);
 /******************************/

@@ -532,13 +532,13 @@ long ArrayList_get_item_index(ArrayList* list, const void* item)
 
 	/* Setters */
 /* Sets the maximum capacity of the ArrayList to the given value.
- * If 'max_cap' is set to zero, then the maximum size will be SIZE_MAX.
+ * If 'max_cap' is set to zero, then the maximum size will be ULONG_MAX.
  *
  * Assumes list is not null. */
 void ArrayList_set_max_cap(ArrayList* list, size_t max_cap)
 {
 	if(max_cap == 0)
-		max_cap = SIZE_MAX;
+		max_cap = ULONG_MAX;
 
 	list->capacity = max_cap;
 }
@@ -853,7 +853,7 @@ ArrayList* newArrayList_ex(alib_free_value free_item, size_t start_capacity,
 
 	/* Check for valid capacity. */
 	if(max_capacity == 0)
-		max_capacity = SIZE_MAX;
+		max_capacity = ULONG_MAX;
 	if(max_capacity < start_capacity)
 		return(NULL);
 
@@ -876,7 +876,7 @@ ArrayList* newArrayList_ex(alib_free_value free_item, size_t start_capacity,
 
 	return(list);
 }
-/* Constructs a new ArrayList with a max capacity of SIZE_MAX and an initial capacity of 4.
+/* Constructs a new ArrayList with a max capacity of ULONG_MAX and an initial capacity of 4.
  * Mutexing is enabled by default.
  *
  * Parameters:

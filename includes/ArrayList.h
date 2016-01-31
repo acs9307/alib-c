@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <pthread.h>
 
 #include "alib_types.h"
@@ -197,7 +198,7 @@ long ArrayList_get_item_index(ArrayList* list, const void* item);
 
 	/* Setters */
 /* Sets the maximum capacity of the ArrayList to the given value.
- * If 'max_cap' is set to zero, then the maximum size will be SIZE_MAX.
+ * If 'max_cap' is set to zero, then the maximum size will be ULONG_MAX.
  *
  * Assumes list is not null. */
 void ArrayList_set_max_cap(ArrayList* list, size_t max_cap);
@@ -275,7 +276,7 @@ void ArrayList_use_mutex(ArrayList* list, char use_mutex);
  */
 ArrayList* newArrayList_ex(alib_free_value free_item, size_t start_capacity,
 		size_t max_capacity, char use_mutex);
-/* Constructs a new ArrayList with a max capacity of SIZE_MAX and an initial capacity of 4.
+/* Constructs a new ArrayList with a max capacity of ULONG_MAX and an initial capacity of 4.
  * Mutexing is enabled by default.
  *
  * Parameters:

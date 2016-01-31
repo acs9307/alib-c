@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "alib_types.h"
 

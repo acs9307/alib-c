@@ -288,7 +288,7 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 /* Creates a new TcpClient.
  *
  * Parameters:
- * 		host_ip_addr: The c-string IP address of the host.
+ * 		host_addr: The address of the host, either IP or DNS.
  * 		port: The port of the host.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
@@ -297,12 +297,13 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
  * Returns:
  * 		NULL: Error.
  * 		TcpClient*: New TcpClient. */
-TcpClient* newTcpClient(const char* host_ip_addr, uint16_t port,
+TcpClient* newTcpClient(const char* host_addr, uint16_t port,
 		void* ex_data, alib_free_value free_data_cb)
 {
 	TcpClient* client;
+	struct hostent* host;
 
-	if(!host_ip_addr)
+	if(!host_addr)
 		return(NULL);
 
 	/* Allocate the object. */
@@ -310,8 +311,10 @@ TcpClient* newTcpClient(const char* host_ip_addr, uint16_t port,
 	if(!client)return(NULL);
 
 	/* Initialize the addr. */
+	host = gethostbyname(host_addr);
+
 	memset(&client->host_addr, 0, sizeof(client->host_addr));
-	client->host_addr.sin_addr.s_addr = inet_addr(host_ip_addr);
+	client->host_addr.sin_addr = *((struct in_addr*)host->h_addr_list);
 	client->host_addr.sin_family = AF_INET;
 	client->host_addr.sin_port = htons(port);
 

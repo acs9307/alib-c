@@ -98,10 +98,10 @@ char ErrorLogger_default_truncate_size_ready(ErrorLogger* logger, size_t f_size)
  */
 alib_error ErrorLogger_log_error(ErrorLogger* logger, const char* loc, int err_code, const char* err_msg)
 {
+	if(!logger)return(ALIB_BAD_ARG);
+
 	int timeout = logger->timeout;
 	json_object* obj;
-
-	if(!logger)return(ALIB_BAD_ARG);
 
 	/* Try locking the object. */
 	while(pthread_mutex_trylock(&logger->mutex))
@@ -126,7 +126,7 @@ alib_error ErrorLogger_log_error(ErrorLogger* logger, const char* loc, int err_c
 		if(logger->time_option & ELTO_RUN_TIME)
 			json_object_object_add(obj, "runTime", json_object_new_int64(now - logger->startup_time));
 		if(logger->time_option & ELTO_CURRENT_TIME)
-			json_object_object_add(obj, "currentTime", json_object_new_string(ctime(&now)));
+			json_object_object_add(obj, "currentTime", json_object_new_string((const char*)ctime(&now)));
 	}
 
 	/* Write the app name. */
@@ -136,6 +136,9 @@ alib_error ErrorLogger_log_error(ErrorLogger* logger, const char* loc, int err_c
 	/* Write the location to the file. */
 	if(loc)
 		json_object_object_add(obj, "location", json_object_new_string(loc));
+
+	/* Write the error code. */
+	json_object_object_add(obj, "errCode", json_object_new_int(err_code));
 
 	/* Print the error data. */
 	if(err_msg)
@@ -187,7 +190,7 @@ time_t ErrorLogger_get_startup_time(ErrorLogger* logger)
 	return(logger->startup_time);
 }
 /* Gets the number of times the ErrorLogger has logged an error.
- * If more than SIZE_MAX errors have been logged, then the value
+ * If more than ULONG_MAX errors have been logged, then the value
  * will be inaccurate.
  *
  * Assumes 'logger' is not null. */
