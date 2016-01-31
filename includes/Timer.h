@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <time.h>
 
+#include "alib_error.h"
+
 typedef struct Timer Timer;
 
 /*******Public Functions*******/
