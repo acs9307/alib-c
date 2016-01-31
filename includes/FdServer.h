@@ -7,7 +7,6 @@
 #include <sys/epoll.h>
 
 #include "server_defines.h"
-#include "UvTcpServer_private.h"
 #include "ArrayList.h"
 #include "ancillary.h"
 #include "flags.h"
