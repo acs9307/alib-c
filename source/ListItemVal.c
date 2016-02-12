@@ -20,7 +20,7 @@ void* ListItemVal_get_value(ListItemVal* liv){return(liv->value);}
 /*******Lifecycle*******/
 ListItemVal* newListItemVal(void* val, alib_free_value free_val_cb)
 {
-	ListItemVal* liv = malloc(sizeof(ListItemVal));
+	ListItemVal* liv = (ListItemVal*)malloc(sizeof(ListItemVal));
 	if(!liv)return(NULL);
 
 	liv->value = val;

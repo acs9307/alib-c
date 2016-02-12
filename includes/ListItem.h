@@ -10,6 +10,11 @@ void* ListItem_get_val(ListItem* item);
 /* Gets a pointer to the ListItem's ListItemVal object member
  * and increments its reference counter. */
 ListItemVal* ListItem_get_val_ref(ListItem* item);
+/* Returns !0 if the item has been removed from the list, or 0 if it should remain. */
+char ListItem_is_removed(ListItem* item);
+
+/* Marks the item for removal. */
+void ListItem_mark_for_removal(ListItem* item);
 
 /*******Lifecycle*******/
 #ifndef initListItem
@@ -23,6 +28,7 @@ ListItemVal* ListItem_get_val_ref(ListItem* item);
 	do{\
 	(item)->val = item_val;\
 	(item)->parent = NULL;\
+	(item)->removed = 0;\
 	}while(0)
 #endif
 

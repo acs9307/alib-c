@@ -589,7 +589,7 @@ alib_error DListItem_set_list_parent(DListItem* list, void* parent)
 DListItem* newDListItem(void* item_value, alib_free_value free_value_cb,
 		DListItem** old_list)
 {
-	DListItem* list = malloc(sizeof(DListItem));
+	DListItem* list = (DListItem*)malloc(sizeof(DListItem));
 	if(!list)return(NULL);
 
 	/* Initialize base. */

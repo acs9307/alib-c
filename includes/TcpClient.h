@@ -120,7 +120,7 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 /* Creates a new TcpClient.
  *
  * Parameters:
- * 		host_addr: The address of the host, either IP or DNS.
+ * 		host_addr: The address of the host.
  * 		port: The port of the host.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon

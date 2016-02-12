@@ -1,3 +1,20 @@
+----Version 1.1.1----
+ComDataCheck:
+	Added extended data.
+	Now handles multiple packets sent in a single TCP packet by placing unrelated data in a seperate buffer.
+		The user should call 'ComDataCheck_process_buffered_data()' if 'ComDataCheck_check()'
+		or 'ComDataCheck_append()' return CDC_DATA_REMAINING. 
+
+DList:
+	Added '_lsafe()' functions, so that items can be removed from the list
+		after iteration is complete. 
+
+ListItem:
+	Added 'removed' member, so that items may be marked for removal. 
+
+TcpClient:
+	Reverted back to Version 1.0.0 of file, for some reason could not connect using a host name. 
+
 ----Version 1.1.0----
 Removed all SIZE_MAX and replaced with ULONG_MAX as some compilers do not include a definition 
 for SIZE_MAX.

@@ -6,9 +6,12 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "BinaryBuffer.h"
-#include "String.h"
-#include "server_defines.h"
+#include <alib-c/BinaryBuffer.h>
+#include <alib-c/String.h>
+#include <alib-c/server_defines.h>
+//#include "BinaryBuffer.h"
+//#include "String.h"
+//#include "server_defines.h"
 
 /* Used during data transmission so that the receiver knows if all
  * data has or hasn't been received yet.
@@ -22,15 +25,24 @@ typedef struct ComDataCheck ComDataCheck;
 
 typedef enum ComDataCheck_RVal
 {
+	CDC_LEN_ERR = ALIB_OBJ_CORRUPTION,
 	CDC_COMPLETE = 0,
 	CDC_WAITING = 1,
-	CDC_LEN_ERR = ALIB_OBJ_CORRUPTION
+	/* Data is still waiting to be processed. */
+	CDC_DATA_REMAINING = 2,
 }ComDataCheck_RVal;
 
 /*******Public Functions*******/
 /* Checks the state of the ComDataCheck object and returns
  * a related ComDataCheck_RVal. */
 int ComDataCheck_check(ComDataCheck* cdc);
+
+/* Processes the unprocessed data in the ComDataCheck object by calling
+ * 'ComDataCheck_append()' to append the unprocessed data onto the end of the object's buffer
+.
+ *
+ * Returns the same value as 'ComDataCheck_append()'. */
+int ComDataCheck_process_buffered_data(ComDataCheck* cdc);
 
 /* Appends data to a ComDataCheck object and returns
  * a ComDataCheck_RVal or error code for the object.
@@ -90,6 +102,8 @@ BinaryBuffer* ComDataCheck_get_buffer (ComDataCheck* cdc);
  *
  * Assumes 'cdc' is not null. */
 int ComDataCheck_get_expected_len(ComDataCheck* cdc);
+
+void* ComDataCheck_get_extended_data(ComDataCheck* cdc);
 	/***********/
 
 	/* Setters */
@@ -101,6 +115,9 @@ int ComDataCheck_get_expected_len(ComDataCheck* cdc);
  * If the mode is not changed, that is, if the mode is already
  * set to the given mode, nothing will be changed. */
 void ComDataCheck_set_mode(ComDataCheck* cdc, char input);
+
+void ComDataCheck_set_extended_data(ComDataCheck* cdc, void* extended_data,
+	alib_free_value free_extended_data);
 	/***********/
 /******************************/
 

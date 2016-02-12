@@ -199,6 +199,22 @@ alib_error DList_remove(DList* list, size_t index)
 	--list->count;
 	return(ALIB_OK);
 }
+/* Marks the item at the given index for removal.  Safe to use in loops.
+ * 
+ * Parameters:
+ *		list: The list to remove from.
+ *		index: The index of the item to remove. */
+alib_error DList_remove_lsafe(DList* list, size_t index)
+{
+	if (!list || index >= list->count)return(ALIB_BAD_ARG);
+
+	ListItem* li = DList_get(list, index);
+	if (!li)return(ALIB_BAD_INDEX);
+
+	ListItem_mark_for_removal(li);
+	list->items_ready_for_removal = 1;
+	return(ALIB_OK);
+}
 /* Removes a set of items at the given index.
  *
  * Parameters:
@@ -217,6 +233,27 @@ alib_error DList_remove_count(DList* list, size_t index, size_t count)
 
 	delDListItem_all(&remove_list);
 
+	return(ALIB_OK);
+}
+/* Similar to 'DList_remove_count()' except that the items are only marked for removal rather than actually removed. 
+ * 
+ * Parameters:
+ * 		list: The list to modify.
+ * 		index: The index to remove.
+ * 		count: The number of items to remove.  If the count exceeds
+ * 			the number of items found after 'index', then only the
+ * 			found items will be removed. */
+alib_error DList_remove_count_lsafe(DList* list, size_t index, size_t count)
+{
+	if (!list || index >= list->count)return(ALIB_BAD_ARG);
+
+	DListItem* item = (DListItem*)DList_get(list, index);
+	if (!item)return(ALIB_BAD_INDEX);
+
+	for (; count && item; --count, item = item->next)
+		ListItem_mark_for_removal((ListItem*)item);
+
+	list->items_ready_for_removal = 1;
 	return(ALIB_OK);
 }
 /* Removes an item from the list.
@@ -243,13 +280,28 @@ alib_error DList_remove_item(DList* list, DListItem* item)
 	--list->count;
 	return(ALIB_OK);
 }
-/* Removes a set of items from the list.
+/* Marks an item to be removed from the list.
  *
  * Parameters:
  * 		list: The list to modify.
  * 		item: The item to remove from the list.  The item MUST
  * 			belong to 'list'.  If it does not, then the function
- * 			will fail.
+ * 			will fail. */
+alib_error DList_remove_item_lsafe(DList* list, DListItem* item)
+{
+	if (!list || item->base.parent != list)return(ALIB_BAD_ARG);
+
+	ListItem_mark_for_removal((ListItem*)item);
+	list->items_ready_for_removal = 1;
+	return(ALIB_OK);
+}
+/* Removes 'count' number of items starting at 'item'.
+ *
+ * Parameters:
+ * 		list: The list to modify.
+ * 		item: The beginning of the set of items to remove from the list.  
+ *			The item MUST belong to 'list'.  If it does not, then 
+ *			the function will fail.
  * 		count: The number of items to remove from the list.  If the
  * 			end of the list is hit before the count is reached, then
  * 			only the found items will be removed.  */
@@ -259,6 +311,42 @@ alib_error DList_remove_item_count(DList* list, DListItem* item, size_t count)
 	 * determine the number of items actually removed, therefore we just
 	 * use the 'DList_remove_count()' function.  */
 	return(DList_remove_count(list, DListItem_index(item), count));
+}
+/* Marks 'count' number of items starting at 'item' for removal. 
+ *
+ * Parameters:
+ * 		list: The list to modify.
+ * 		item: The beginning of the set of items to remove from the list.
+ *			The item MUST belong to 'list'.  If it does not, then
+ *			the function will fail.
+ * 		count: The number of items to remove from the list.  If the
+ * 			end of the list is hit before the count is reached, then
+ * 			only the found items will be removed.  */
+alib_error DList_remove_item_count_lsafe(DList* list, DListItem* item, size_t count)
+{
+	/* We have to calculate the index of the item, otherwise we can't
+	* determine the number of items actually removed, therefore we just
+	* use the 'DList_remove_count()' function.  */
+	return(DList_remove_count_lsafe(list, DListItem_index(item), count));
+}
+
+/* Removes all items that have been marked for removal.  This should be called whenever it is safe to remove
+ * items that were removed by '_lsafe()' functions. */
+void DList_remove_marked_items(DList* list)
+{
+	if (!list || !list->items_ready_for_removal)return;
+
+	DListItem* iter = list->begin;
+	for (; iter; )
+	{
+		if (iter->base.removed)
+		{
+			iter = iter->next;
+			DList_remove_item(list, iter->prev);
+		}
+		else
+			iter = iter->next;
+	}
 }
 
 /* Pulls an item from the list at the given index and returns it.
@@ -381,7 +469,7 @@ ListItem* DList_get_by_value(DList* list, void* val)
 /* Default constructor. */
 DList* newDList()
 {
-	DList* list = malloc(sizeof(DList));
+	DList* list = (DList*)malloc(sizeof(DList));
 	if(!list)return(NULL);
 
 	list->begin = NULL;

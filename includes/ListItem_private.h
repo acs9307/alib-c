@@ -12,6 +12,9 @@ struct ListItem
 	ListItemVal* val;
 
 	void* parent;
+
+	/* If !0, then the item has been removed from the list and should be deleted whenever it is safe to do so. */
+	char removed;
 };
 
 #endif

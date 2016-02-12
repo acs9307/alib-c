@@ -15,10 +15,28 @@ int ComDataCheck_check(ComDataCheck* cdc)
 		else if(buff_len == cdc->data_len)
 			return(CDC_COMPLETE);
 		else
-			return(CDC_LEN_ERR);
+		{
+			BinaryBuffer_append(cdc->unread_buff, BinaryBuffer_get_raw_buff(cdc->buff) + cdc->data_len, 
+				buff_len - cdc->data_len);
+			BinaryBuffer_remove(cdc->buff, cdc->data_len, buff_len);
+			return(CDC_DATA_REMAINING);
+		}
 	}
 	else
 		return(CDC_COMPLETE);
+}
+
+/* Processes the unprocessed data in the ComDataCheck object by calling 
+ * 'ComDataCheck_append()' to append the unprocessed data onto the end of the object's buffer.
+ * 
+ * Returns the same value as 'ComDataCheck_append()'. */
+int ComDataCheck_process_buffered_data(ComDataCheck* cdc)
+{
+	if(!cdc)return(ALIB_BAD_ARG);
+
+	size_t buff_len = BinaryBuffer_get_length(cdc->unread_buff);
+	unsigned char* buff = BinaryBuffer_extract_buffer(cdc->unread_buff);
+	return(ComDataCheck_append(cdc, buff, buff_len));
 }
 
 /* Appends data to a ComDataCheck object and returns
@@ -49,6 +67,17 @@ int ComDataCheck_append(ComDataCheck* cdc, unsigned char* data, size_t data_len)
 
 	/* Check for argument errors. */
 	if(!cdc)return(ALIB_BAD_ARG);
+	
+	if(BinaryBuffer_get_length(cdc->unread_buff))
+	{
+		err = ComDataCheck_process_buffered_data(cdc);
+		if(err == CDC_COMPLETE || err == CDC_DATA_REMAINING)
+		{
+			BinaryBuffer_append(cdc->unread_buff, data, data_len);
+			return(err);
+		}
+	}
+	
 	if(!data || !data_len)
 		return(ComDataCheck_check(cdc));
 
@@ -222,6 +251,8 @@ int ComDataCheck_get_expected_len(ComDataCheck* cdc)
 {
 	return(cdc->data_len);
 }
+
+void* ComDataCheck_get_extended_data(ComDataCheck* cdc){return(cdc->extended_data);}
 	/***********/
 
 	/* Setters */
@@ -242,6 +273,18 @@ void ComDataCheck_set_mode(ComDataCheck* cdc, char input)
 	else
 		cdc->data_len = BinaryBuffer_get_length(cdc->buff);
 }
+
+void ComDataCheck_set_extended_data(ComDataCheck* cdc, void* extended_data, 
+	alib_free_value free_extended_data)
+{
+	if(!cdc)return;
+
+	if(cdc->extended_data && cdc->free_extended_data)
+		cdc->free_extended_data(cdc->extended_data);
+
+	cdc->extended_data = extended_data;
+	cdc->free_extended_data = free_extended_data;
+}
 	/***********/
 /******************************/
 
@@ -255,11 +298,14 @@ ComDataCheck* newComDataCheck(char input)
 	/* Initialize non-dynamic members. */
 	cdc->input = input;
 	cdc->data_len = 0;
+	cdc->extended_data = NULL;
+	cdc->free_extended_data = NULL;
 
 	/* Initialize dynamic members. */
 	cdc->buff = newBinaryBuffer();
+	cdc->unread_buff = newBinaryBuffer();
 
-	if(!cdc->buff)
+	if(!cdc->buff || !cdc->unread_buff)
 		delComDataCheck(&cdc);
 
 	return(cdc);
@@ -271,6 +317,9 @@ void freeComDataCheck(ComDataCheck* cdc)
 	if(!cdc)return;
 
 	delBinaryBuffer(&cdc->buff);
+	delBinaryBuffer(&cdc->unread_buff);
+	if(cdc->extended_data && cdc->free_extended_data)
+		cdc->free_extended_data(cdc->extended_data);
 
 	free(cdc);
 }

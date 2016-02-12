@@ -11,6 +11,16 @@ ListItemVal* ListItem_get_val_ref(ListItem* item)
 {
 	return(ListItemVal_ref(item->val));
 }
+/* Returns !0 if the item has been removed from the list, or 0 if it should remain. */
+char ListItem_is_removed(ListItem* item)
+{
+	return(item->removed);
+}
+/* Marks the item for removal. */
+void ListItem_mark_for_removal(ListItem* item)
+{
+	item->removed = 1;
+}
 
 /*******Lifecycle*******/
 /* Constructs a new ListItem with the value set to the given
@@ -26,7 +36,7 @@ ListItem* newListItem_ex(ListItemVal* val)
 {
 	if(!val)return(NULL);
 
-	ListItem* item = malloc(sizeof(ListItem));
+	ListItem* item = (ListItem*)malloc(sizeof(ListItem));
 	if(!item)return(item);
 
 	initListItem(item, val);
