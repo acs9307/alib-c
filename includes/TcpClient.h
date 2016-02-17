@@ -131,6 +131,19 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
  * 		TcpClient*: New TcpClient. */
 TcpClient* newTcpClient(const char* host_addr, uint16_t port,
 		void* ex_data, alib_free_value free_data_cb);
+/* Creates a TcpClient from an already connected socket.
+ *
+ * Parameters:
+ * 		sock: The socket to build the client from.
+ * 		ex_data (OPTIONAL): Extended data for the client.
+ * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
+ * 			object destruction.
+ *
+ * Returns:
+ * 		NULL: Error.
+ * 		TcpClient*: New TcpClient.*/
+TcpClient* newTcpClient_connected(int sock, void* ex_data, alib_free_value free_data_cb);
+
 /* Disconnects the client and destroys the object. */
 void delTcpClient(TcpClient** client);
 /**************************/

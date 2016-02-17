@@ -168,7 +168,8 @@ void TcpClient_read_start(TcpClient* client)
 {
 	if(!client)return;
 
-	if(!(client->flag_pole & THREAD_IS_RUNNING) && client->data_in_cb && client->sock >= 0)
+	if(!(client->flag_pole & THREAD_IS_RUNNING) && client->data_in_cb
+			&& client->sock >= 0)
 	{
 		/* Call join to ensure all memory is cleaned up. */
 		if(client->flag_pole & THREAD_CREATED)
@@ -248,7 +249,10 @@ void TcpClient_set_data_in_cb(TcpClient* client, tc_data_in data_in_cb)
 	if(!client)return;
 
 	client->data_in_cb = data_in_cb;
-	TcpClient_read_start(client);
+	if(client->data_in_cb)
+		TcpClient_read_start(client);
+	else
+		TcpClient_read_stop(client);
 }
 /* Sets the disconnect cb for the client.
  * This callback is called after the client has been disconnected from the host.
@@ -285,7 +289,27 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 /******************************/
 
 /*******Constructors*******/
-/* Creates a new TcpClient.
+	/* Private Constructors */
+/* Base for construction of the object. Used by all other constructors. */
+static TcpClient* newTcpClient_base(void* ex_data, alib_free_value free_data_cb)
+{
+	TcpClient* client = malloc(sizeof(TcpClient));
+	if(!client)return(NULL);
+
+	/* Initialize members. */
+	client->ex_data = ex_data;
+	client->free_data_cb = free_data_cb;
+	client->flag_pole = 0;
+		/* Callbacks */
+	client->disconnect_cb = NULL;
+	client->data_in_cb = NULL;
+	client->sockopt_cb = NULL;
+
+	return(client);
+}
+	/************************/
+
+/* Creates a disconnected new TcpClient.
  *
  * Parameters:
  * 		host_addr: The address of the host.
@@ -300,37 +324,56 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 TcpClient* newTcpClient(const char* host_addr, uint16_t port,
 		void* ex_data, alib_free_value free_data_cb)
 {
-	TcpClient* client;
-	//struct hostent* host;
-
 	if(!host_addr)
 		return(NULL);
 
-	/* Allocate the object. */
-	client = malloc(sizeof(TcpClient));
+	TcpClient* client = newTcpClient_base(ex_data, free_data_cb);
+	//struct hostent* host;
+
+	/* Check for errors with previous level of construction. */
 	if(!client)return(NULL);
 
-	/* Initialize the addr. */
-//	host = gethostbyname(host_addr);
-
-	memset(&client->host_addr, 0, sizeof(client->host_addr));
-//	client->host_addr.sin_addr = *((struct in_addr*)host->h_addr_list);
-	client->host_addr.sin_addr.s_addr = inet_addr(host_addr);
-	client->host_addr.sin_family = AF_INET;
-	client->host_addr.sin_port = htons(port);
-
-	/* Initialize other members. */
-	client->ex_data = ex_data;
-	client->free_data_cb = free_data_cb;
+	/* Initialize members. */
 	client->sock = -1;
-	client->flag_pole = 0;
-		/* Callbacks */
-	client->disconnect_cb = NULL;
-	client->data_in_cb = NULL;
-	client->sockopt_cb = NULL;
+		/* Initialize the addr. */
+	memset(&client->host_addr, 0, sizeof(client->host_addr));
+//	host = gethostbyname(host_addr);
+//	client->host_addr.sin_addr = *((struct in_addr*)host->h_addr_list);
+	client->host_addr.sin_family = AF_INET;
+	client->host_addr.sin_addr.s_addr = inet_addr(host_addr);
+	client->host_addr.sin_port = htons(port);
 
 	return(client);
 }
+/* Creates a TcpClient from an already connected socket.
+ *
+ * Parameters:
+ * 		sock: The socket to build the client from.
+ * 		ex_data (OPTIONAL): Extended data for the client.
+ * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
+ * 			object destruction.
+ *
+ * Returns:
+ * 		NULL: Error.
+ * 		TcpClient*: New TcpClient.*/
+TcpClient* newTcpClient_connected(int sock, void* ex_data, alib_free_value free_data_cb)
+{
+	if(sock < 0)return(NULL);
+
+	TcpClient* client = newTcpClient_base(ex_data, free_data_cb);
+	if(!client)return(NULL);
+
+	/* Initialize members. */
+	client->sock = sock;
+
+	/* Get the host address from the socket. If the function fails, then
+	 * we should simply delete the object. */
+	if(getsockname(sock, &client->host_addr, sizeof(client->host_addr)))
+		delTcpClient(&client);
+
+	return(client);
+}
+
 /* Disconnects the client and destroys the object. */
 void delTcpClient(TcpClient** client)
 {

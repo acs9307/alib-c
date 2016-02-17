@@ -1,19 +1,14 @@
 #include "alib_sockets.h"
 
-/* Sets the given socket to non-blocking mode.
+/* Sets a timeout for the socket.
  *
- * Returns:
- * 		alib_error
- * 		Return code from 'fcntl()'. */
-int set_sock_non_block(int sock)
+ * Returns code from 'setsockopt()'.
+ *
+ * Does not check for socket validity. */
+int set_sock_recv_timeout(int sock, size_t secs, size_t micros)
 {
-	int err;
-
-	if(sock < 0)return(ALIB_BAD_ARG);
-
-	err = fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
-	if(err)
-		return(err);
-	else
-		return(ALIB_OK);
+	struct timeval tv;
+	tv.tv_sec = secs;
+	tv.tv_usec = micros;
+	return(setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)));
 }

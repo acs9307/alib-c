@@ -6,12 +6,10 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include <alib-c/BinaryBuffer.h>
-#include <alib-c/String.h>
-#include <alib-c/server_defines.h>
-//#include "BinaryBuffer.h"
-//#include "String.h"
-//#include "server_defines.h"
+#include "alib_sockets.h"
+#include "BinaryBuffer.h"
+#include "String.h"
+#include "server_defines.h"
 
 /* Used during data transmission so that the receiver knows if all
  * data has or hasn't been received yet.
@@ -92,6 +90,18 @@ alib_error ComDataCheck_send(ComDataCheck* cdc, int sock, int flags);
  * 		sock: The socket to receive data from.
  * 		flags: The flags to use with 'recv()'. */
 alib_error ComDataCheck_recv(ComDataCheck* cdc, int sock, int flags);
+/* Same as 'ComDataCheck_recv()' except with a timeout.
+ * This will set the receive timeout option for the socket.  If a timeout is
+ * not desired after this call, then the user MUST manually reset the timeout for the socket.
+ *
+ * Parameters:
+ * 		cdc: The ComDataCheck to store received data from.
+ * 		sock: The socket to receive data from.
+ * 		flags: The flags to use with 'recv()'.
+ * 		secs: The number of seconds to wait before timing out. (Added to 'micros')
+ * 		micros: The number of micro seconds to wait before timing out. (Added to 'secs') */
+alib_error ComDataCheck_recv_timeout(ComDataCheck* cdc, int sock, int flags,
+		size_t secs, size_t micros);
 
 	/* Getters */
 /* Returns the buffer of the ComDataCheck object.

@@ -201,6 +201,7 @@ alib_error ComDataCheck_send(ComDataCheck* cdc, int sock, int flags)
 
 	return(ALIB_OK);
 }
+
 /* Receives data on a given socket and places said data into the provided
  * ComDataCheck object.
  *
@@ -229,11 +230,29 @@ alib_error ComDataCheck_recv(ComDataCheck* cdc, int sock, int flags)
 			break;
 	}while((rval = ComDataCheck_append(cdc, buff, recv_len)) == CDC_WAITING);
 
-	/* Figure out what needs to be returned. */
-	if(rval == CDC_WAITING)
-		return(ALIB_FILE_READ_ERR);
+	return(rval);
+}
+/* Same as 'ComDataCheck_recv()' except with a timeout.
+ * This will set the receive timeout option for the socket.  If a timeout is
+ * not desired after this call, then the user MUST manually reset the timeout for the socket.
+ *
+ * Parameters:
+ * 		cdc: The ComDataCheck to store received data from.
+ * 		sock: The socket to receive data from.
+ * 		flags: The flags to use with 'recv()'.
+ * 		secs: The number of seconds to wait before timing out. (Added to 'micros')
+ * 		micros: The number of micro seconds to wait before timing out. (Added to 'secs') */
+alib_error ComDataCheck_recv_timeout(ComDataCheck* cdc, int sock, int flags,
+		size_t secs, size_t micros)
+{
+	if(set_sock_recv_timeout(sock, secs, micros))
+		return(ALIB_FILE_ERR);
+
+	alib_error err = ComDataCheck_recv(cdc, sock, flags);
+	if(err == CDC_WAITING)
+		return(ALIB_TIMEOUT);
 	else
-		return(rval);
+		return(err);
 }
 
 	/* Getters */

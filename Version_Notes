@@ -1,3 +1,17 @@
+----Version 1.1.2----
+alib_sockets:
+    Changed 'set_sock_non_block()' to a macro function, removed check of socket value.
+    Added 'set_sock_recv_timeout()'.
+
+ComDataCheck:
+    Added 'ComDataCheck_recv_timeout()'.
+    Modified 'ComDataCheck_recv()' so that it simply returns the value returned from 'ComDataCheck_append()'. 
+
+TcpClient:
+    Modified 'TcpClient_set_data_in_cb()' to start reading if a callback is provided and to stop reading if the callback is set to NULL.
+    Moved main construction to 'newTcpClient_base()'.
+    Added 'newTcpClient_connected()' so that a client can be built from an already connected socket.
+
 ----Version 1.1.1----
 ComDataCheck:
 	Added extended data.
