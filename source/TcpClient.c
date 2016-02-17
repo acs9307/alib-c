@@ -300,6 +300,8 @@ static TcpClient* newTcpClient_base(void* ex_data, alib_free_value free_data_cb)
 	client->ex_data = ex_data;
 	client->free_data_cb = free_data_cb;
 	client->flag_pole = 0;
+    client->sock = -1;
+    memset(&client->host_addr, 0, sizeof(client->host_addr));
 		/* Callbacks */
 	client->disconnect_cb = NULL;
 	client->data_in_cb = NULL;
@@ -334,9 +336,6 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
 	if(!client)return(NULL);
 
 	/* Initialize members. */
-	client->sock = -1;
-		/* Initialize the addr. */
-	memset(&client->host_addr, 0, sizeof(client->host_addr));
 //	host = gethostbyname(host_addr);
 //	client->host_addr.sin_addr = *((struct in_addr*)host->h_addr_list);
 	client->host_addr.sin_family = AF_INET;
@@ -360,6 +359,7 @@ TcpClient* newTcpClient_connected(int sock, void* ex_data, alib_free_value free_
 {
 	if(sock < 0)return(NULL);
 
+    socklen_t addr_len;
 	TcpClient* client = newTcpClient_base(ex_data, free_data_cb);
 	if(!client)return(NULL);
 
@@ -368,7 +368,8 @@ TcpClient* newTcpClient_connected(int sock, void* ex_data, alib_free_value free_
 
 	/* Get the host address from the socket. If the function fails, then
 	 * we should simply delete the object. */
-	if(getsockname(sock, &client->host_addr, sizeof(client->host_addr)))
+    addr_len = sizeof(client->host_addr);
+	if(getsockname(sock, (struct sockaddr*)&client->host_addr, &addr_len))
 		delTcpClient(&client);
 
 	return(client);
