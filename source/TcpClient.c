@@ -239,6 +239,13 @@ void* TcpClient_extract_ex_data(TcpClient* client)
 	client->ex_data = NULL;
 	return(rval);
 }
+
+/* Returns whether or not the client will close the socket when the object
+ * is freed. */
+char TcpClient_will_close_sock_on_free(TcpClient* client)
+{
+    return(client->close_sock_on_free);
+}
 	/***********/
 
 	/* Setters */
@@ -284,6 +291,12 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 
 	client->ex_data = ex_data;
 	client->free_data_cb = free_data_cb;
+}
+
+/* Sets whether or not the socket should be closed upon freeing of the object. */
+void TcpClient_close_sock_on_free(TcpClient* client, char close_sock_on_free)
+{
+    client->close_sock_on_free = close_sock_on_free;
 }
 	/***********/
 /******************************/

@@ -89,6 +89,10 @@ char TcpClient_is_reading(TcpClient* client);
  *
  * Assumes 'client' is not null. */
 void* TcpClient_extract_ex_data(TcpClient* client);
+
+/* Returns whether or not the client will close the socket when the object
+ * is freed. */
+char TcpClient_will_close_sock_on_free(TcpClient* client);
 	/***********/
 
 	/* Setters */
@@ -113,6 +117,9 @@ void TcpClient_set_sockopt_cb(TcpClient* client, tc_sockopt sockopt_cb);
  * Assumes 'client' is not null. */
 void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 		alib_free_value free_data_cb);
+
+/* Sets whether or not the socket should be closed upon freeing of the object. */
+void TcpClient_close_sock_on_free(TcpClient* client, char close_sock_on_free);
 	/***********/
 /******************************/
 
