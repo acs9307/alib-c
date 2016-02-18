@@ -27,6 +27,8 @@ struct TcpClient
 
 	void* ex_data;
 	alib_free_value free_data_cb;
+
+    char close_sock_on_free;
 };
 /*******************************/
 

@@ -301,6 +301,7 @@ static TcpClient* newTcpClient_base(void* ex_data, alib_free_value free_data_cb)
 	client->free_data_cb = free_data_cb;
 	client->flag_pole = 0;
     client->sock = -1;
+    client->close_sock_on_free = 1;
     memset(&client->host_addr, 0, sizeof(client->host_addr));
 		/* Callbacks */
 	client->disconnect_cb = NULL;
@@ -348,6 +349,8 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
  *
  * Parameters:
  * 		sock: The socket to build the client from.
+ *      close_sock_on_free: If !0, the socket will be closed upon object deletio
+n.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
  * 			object destruction.
@@ -355,7 +358,7 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
  * Returns:
  * 		NULL: Error.
  * 		TcpClient*: New TcpClient.*/
-TcpClient* newTcpClient_connected(int sock, void* ex_data, alib_free_value free_data_cb)
+TcpClient* newTcpClient_from_socket(int sock, char close_sock_on_free, void* ex_data, alib_free_value free_data_cb)
 {
 	if(sock < 0)return(NULL);
 
@@ -365,6 +368,7 @@ TcpClient* newTcpClient_connected(int sock, void* ex_data, alib_free_value free_
 
 	/* Initialize members. */
 	client->sock = sock;
+    client->close_sock_on_free  = close_sock_on_free;
 
 	/* Get the host address from the socket. If the function fails, then
 	 * we should simply delete the object. */
@@ -384,7 +388,11 @@ void delTcpClient(TcpClient** client)
 	/* Place the object in a delete state. */
 	flag_raise(&(*client)->flag_pole, OBJECT_DELETE_STATE);
 
-	TcpClient_disconnect(*client);
+    if((*client)->close_sock_on_free)
+    	TcpClient_disconnect(*client);
+    else
+        TcpClient_read_stop(*client);
+
 	if((*client)->free_data_cb)
 		(*client)->free_data_cb((*client)->ex_data);
 

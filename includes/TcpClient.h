@@ -135,6 +135,7 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
  *
  * Parameters:
  * 		sock: The socket to build the client from.
+ *      close_sock_on_free: If !0, the socket will be closed upon object deletion.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
  * 			object destruction.
@@ -142,7 +143,7 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
  * Returns:
  * 		NULL: Error.
  * 		TcpClient*: New TcpClient.*/
-TcpClient* newTcpClient_connected(int sock, void* ex_data, alib_free_value free_data_cb);
+TcpClient* newTcpClient_from_socket(int sock, char close_sock_on_free, void* ex_data, alib_free_value free_data_cb);
 
 /* Disconnects the client and destroys the object. */
 void delTcpClient(TcpClient** client);
