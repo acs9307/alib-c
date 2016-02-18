@@ -18,6 +18,7 @@ struct TcpClient
 	tc_data_in data_in_cb;
 	tc_disconnect disconnect_cb;
 	tc_sockopt sockopt_cb;
+	tc_thread_returning thread_returning_cb;
 
 	/* Transmission Members. */
 	/* This is the thread that handles reading of
@@ -27,8 +28,6 @@ struct TcpClient
 
 	void* ex_data;
 	alib_free_value free_data_cb;
-
-    char close_sock_on_free;
 };
 /*******************************/
 

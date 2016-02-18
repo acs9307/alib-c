@@ -236,6 +236,10 @@ static void* start_thread(void* v_ep)
 
 	flag_raise(&server->flag_pole, THREAD_IS_RUNNING);
 	listen_loop(ep);
+
+	/* Call the thread returning event. */
+	if(server->thread_returning)
+		server->thread_returning(server);
 	flag_lower(&server->flag_pole, THREAD_IS_RUNNING);
 
 	if(ep)

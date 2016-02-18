@@ -248,7 +248,7 @@ alib_error ComDataCheck_recv_timeout(ComDataCheck* cdc, int sock, int flags,
 	if(set_sock_recv_timeout(sock, secs, micros))
 		return(ALIB_FILE_ERR);
 
-	alib_error err = ComDataCheck_recv(cdc, sock, flags);
+	int err = ComDataCheck_recv(cdc, sock, flags);
 	if(err == CDC_WAITING)
 		return(ALIB_TIMEOUT);
 	else

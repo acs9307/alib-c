@@ -11,6 +11,10 @@ TcpClient:
     Modified 'TcpClient_set_data_in_cb()' to start reading if a callback is provided and to stop reading if the callback is set to NULL.
     Moved main construction to 'newTcpClient_base()'.
     Added 'newTcpClient_connected()' so that a client can be built from an already connected socket.
+    Added 'tc_thread_returning' and related setter functions.
+
+TcpServer:
+    Added 'ts_thread_returning_cb' and related setter functions.
 
 ----Version 1.1.1----
 ComDataCheck:

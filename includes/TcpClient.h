@@ -36,6 +36,9 @@ typedef server_cb_rval(*tc_disconnect)(TcpClient* client);
  * 		!0: Aborts connecting to host.  It is suggested to return 'alib_error' codes.
  */
 typedef int (*tc_sockopt)(TcpClient* client, int socket);
+/* Called whenever the listening thread is about to return.  Only called if
+ * a thread has been started. */
+typedef void (*tc_thread_returning)(TcpClient* client);
 /****************************/
 
 /*******Public Functions*******/
@@ -89,10 +92,6 @@ char TcpClient_is_reading(TcpClient* client);
  *
  * Assumes 'client' is not null. */
 void* TcpClient_extract_ex_data(TcpClient* client);
-
-/* Returns whether or not the client will close the socket when the object
- * is freed. */
-char TcpClient_will_close_sock_on_free(TcpClient* client);
 	/***********/
 
 	/* Setters */
@@ -110,6 +109,11 @@ void TcpClient_set_disconnect_cb(TcpClient* client, tc_disconnect disconnect_cb)
  *
  * Assumes 'client' is not null. */
 void TcpClient_set_sockopt_cb(TcpClient* client, tc_sockopt sockopt_cb);
+/* Sets the thread returning callback.  This is called whenever any thread started
+ * internally (specifically the listening thread) is about to return.
+ *
+ * Assumes 'client' is not null. */
+void TcpClient_set_thread_returning_cb(TcpClient* client, tc_thread_returning cb);
 
 /* Sets the extended data for the client. If extended data already exists,
  * this will try to free the old data before replacing it.
@@ -117,9 +121,6 @@ void TcpClient_set_sockopt_cb(TcpClient* client, tc_sockopt sockopt_cb);
  * Assumes 'client' is not null. */
 void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 		alib_free_value free_data_cb);
-
-/* Sets whether or not the socket should be closed upon freeing of the object. */
-void TcpClient_close_sock_on_free(TcpClient* client, char close_sock_on_free);
 	/***********/
 /******************************/
 
@@ -142,7 +143,6 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
  *
  * Parameters:
  * 		sock: The socket to build the client from.
- *      close_sock_on_free: If !0, the socket will be closed upon object deletion.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
  * 			object destruction.
@@ -150,7 +150,7 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
  * Returns:
  * 		NULL: Error.
  * 		TcpClient*: New TcpClient.*/
-TcpClient* newTcpClient_from_socket(int sock, char close_sock_on_free, void* ex_data, alib_free_value free_data_cb);
+TcpClient* newTcpClient_from_socket(int sock, void* ex_data, alib_free_value free_data_cb);
 
 /* Disconnects the client and destroys the object. */
 void delTcpClient(TcpClient** client);

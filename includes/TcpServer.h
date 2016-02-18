@@ -96,6 +96,9 @@ typedef server_cb_rval (*ts_client_data_in_cb)(TcpServer* server,
  * 		SCB_DEFAULT - Nothing. */
 typedef server_cb_rval (*ts_client_disconnected_cb)(TcpServer* server,
 		socket_package* client);
+/* Called whenever the thread is about to return. Only called when running
+ * in async mode. */
+typedef void (*ts_thread_returning_cb)(TcpServer* server);
 /******************************/
 
 /*******Public Functions*******/
@@ -162,6 +165,11 @@ void TcpServer_set_client_data_in_cb(TcpServer* server,
 * Assumes 'server' is not null. */
 void TcpServer_set_client_disconnected_cb(TcpServer* server,
 	ts_client_disconnected_cb client_disconnected);
+/* Sets the callback for when the listening thread is about to return.
+ *
+ * Assumes 'server' is not null. */
+void TcpServer_set_thread_returning_cb(TcpServer* server,
+		ts_thread_returning_cb);
 
 /* Sets the the extended data for the server.
 *

@@ -30,6 +30,8 @@ struct TcpServer
 	ts_client_data_in_cb client_data_in;
 	/* Called whenever a client disconnects from the server. */
 	ts_client_disconnected_cb client_disconnected;
+	/* Called whenever the listening thread is about to return. */
+	ts_thread_returning_cb thread_returning;
 
 	/* Extended data for the server. */
 	void* ex_data;
