@@ -427,6 +427,14 @@ void TcpServer_set_client_disconnected_cb(TcpServer* server,
 {
 	server->client_disconnected = client_disconnected;
 }
+/* Sets the callback for when the listening thread is about to return.
+ *
+ * Assumes 'server' is not null. */
+void TcpServer_set_thread_returning_cb(TcpServer* server,
+        ts_thread_returning_cb cb)
+{
+    server->thread_returning = cb;
+}
 
 /* Sets the the extended data for the server.
  *
