@@ -19,7 +19,6 @@ alibc:
 #	gcc -c EventServer.c
 	gcc -c FdClient.c
 	gcc -c FdServer.c
-	gcc -c flags.c
 	gcc -c ListHistory.c
 	gcc -c ListHistoryItem.c
 	gcc -c ListItem.c

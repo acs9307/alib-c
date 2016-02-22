@@ -1,3 +1,20 @@
+----Version 1.1.3----
+    Due to the changes to 'flags.h', all calls to flag pole functions have been fixed.
+
+flags:
+    Changed flag pole functions into inline defines so that flag operations may be done atomically.
+    WARNING: Because of this change, this may break old code as previously a pointer to the flagpole
+        had to be passed where now, a simple integer may be passed.
+
+TcpClient:
+    Added timeout socket option when reading from a socket.  This allows the 
+        thread to be closed even when no data is received.  If no timeout has
+        been set, then a default timeout of 1 second will be set.
+    Added 'TcpClient_read_stop_async()' and 'TcpClient_read_thread_wait()'.  Both are now 
+        used internally instead of 'TcpClient_read_stop()'.
+    Added DNS lookup for hosts.  Now TcpClient's host may be set to a DNS host name instead
+        of just an IP address.  
+
 ----Version 1.1.2----
 alib_sockets:
     Changed 'set_sock_non_block()' to a macro function, removed check of socket value.

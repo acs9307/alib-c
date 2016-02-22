@@ -12,11 +12,13 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "alib_types.h"
 #include "alib_error.h"
 #include "server_defines.h"
 #include "flags.h"
+#include "alib_sockets.h"
 
 /*******Class Declaration*******/
 typedef struct TcpClient TcpClient;
@@ -66,8 +68,29 @@ alib_error TcpClient_send(TcpClient* client, const char* data, size_t data_len);
 
 /* Starts the reading process on the client. */
 void TcpClient_read_start(TcpClient* client);
-/* Stops the reading process on the client. */
+/* Stops the reading process on the client.
+ * This function call WILL BLOCK until the reading thread returns
+ * which may be several seconds, depending on the timeout set for recv().
+ *
+ * If immediate return is required, then call 'TcpClient_read_stop_async()'. */
 void TcpClient_read_stop(TcpClient* client);
+/* Similar to 'TcpClient_read_stop()', however it will not
+ * block, but simply raise a flag for the reading thread to stop.
+ *
+ * This is good in many cases, however it is not as safe as the
+ * synchronous version whenever the reading thread will be restarted.
+ * If the reading thread is restarted before the thread returns, it
+ * is possible that the restart will fail without warning.
+ * To ensure the thread has returned after requesting for it to stop
+ * asynchronously, call 'TcpClient_read_thread_wait()'. */
+void TcpClient_read_stop_async(TcpClient* client);
+/* Polls the flag pole every millisecond until the reading thread
+ * has returned. It is highly suggested not to use this function as
+ * it is unclear how long it will block due to the timeout of 'recv()'.
+ *
+ * This should only be used when 'TcpClient_read_stop_async()' has been
+ * called and the reading thread must be restarted. */
+void TcpClient_read_thread_wait(TcpClient* client);
 
 	/* Getters */
 /* Returns the user defined extended data of the client.
@@ -125,10 +148,10 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 /******************************/
 
 /*******Constructors*******/
-/* Creates a new TcpClient.
+/* Creates a disconnected new TcpClient.
  *
  * Parameters:
- * 		host_addr: The address of the host.
+ * 		host_addr: The address of the host, DNS or IP.
  * 		port: The port of the host.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon

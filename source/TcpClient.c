@@ -7,24 +7,46 @@ static void* read_loop_proc(void* void_client)
 {
 	TcpClient* client = (TcpClient*)void_client;
 	char in_buff[64 * 1024];
-	const size_t in_buff_len = 64*1024;
 	int in_count;
 	int rval;
+	struct timeval tv;
+	socklen_t tv_len = sizeof(tv);
 
-	flag_raise(&client->flag_pole, THREAD_IS_RUNNING);
-	while(client->sock > -1 && client->data_in_cb)
+	flag_raise(client->flag_pole, THREAD_IS_RUNNING);
+
+	/* Ensure there is a timeout set for the socket.  If one does not
+	 * exist, then set the timeout to 1 second. */
+	if(getsockopt(client->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, &tv_len))
+		goto f_return;
+	if(!tv.tv_sec && !tv.tv_usec)
+	{
+		tv.tv_sec = 1;
+		if(setsockopt(client->sock, SOL_SOCKET, SO_RCVTIMEO, &tv, tv_len))
+				goto f_return;
+	}
+
+	while(!(client->flag_pole & THREAD_STOP) && client->sock > -1 &&
+			client->data_in_cb)
 	{
 		/* Wait for data. */
-		in_count = recv(client->sock, in_buff, in_buff_len, 0);
+		in_count = recv(client->sock, in_buff, sizeof(in_buff), 0);
 
 		/* Disconnected/error occurred. */
 		if(in_count <= 0)
 		{
-			/* We can't call 'TcpClient_disconnect()' if the object is in a delete
-			 * state because it has already been called. */
-			if(!(client->flag_pole & OBJECT_DELETE_STATE))
-				TcpClient_disconnect(client);
-			break;
+			if(errno == EWOULDBLOCK)
+			{
+				errno = 0;
+				continue;
+			}
+			else
+			{
+				/* We can't call 'TcpClient_disconnect()' if the object is in a delete
+				 * state because it has already been called. */
+				if(!(client->flag_pole & OBJECT_DELETE_STATE))
+					TcpClient_disconnect(client);
+				break;
+			}
 		}
 		/* Data received. */
 		else
@@ -35,15 +57,17 @@ static void* read_loop_proc(void* void_client)
 			if(rval & (SCB_RVAL_DELETE))
 			{
 				pthread_detach(client->read_thread);
-				flag_lower(&client->flag_pole, THREAD_CREATED);
+				flag_lower(client->flag_pole, THREAD_CREATED);
 				delTcpClient(&client);
 			}
 		}
 	}
 
+f_return:
+	flag_lower(client->flag_pole, THREAD_IS_RUNNING);
+
 	if(client->thread_returning_cb)
 		client->thread_returning_cb(client);
-	flag_lower(&client->flag_pole, THREAD_IS_RUNNING);
 
 	return(NULL);
 }
@@ -117,7 +141,7 @@ void TcpClient_disconnect(TcpClient* client)
 		}
 	}
 
-	TcpClient_read_stop(client);
+	TcpClient_read_stop_async(client);
 }
 
 /* Sends the data to the client's host.
@@ -171,6 +195,7 @@ void TcpClient_read_start(TcpClient* client)
 {
 	if(!client)return;
 
+	flag_lower(client->flag_pole, THREAD_STOP);
 	if(!(client->flag_pole & THREAD_IS_RUNNING) && client->data_in_cb
 			&& client->sock >= 0)
 	{
@@ -178,25 +203,61 @@ void TcpClient_read_start(TcpClient* client)
 		if(client->flag_pole & THREAD_CREATED)
 		{
 			pthread_join(client->read_thread, NULL);
-			flag_lower(&client->flag_pole, THREAD_CREATED);
+			flag_lower(client->flag_pole, THREAD_CREATED);
 		}
 		if(!pthread_create(&client->read_thread, NULL, read_loop_proc, client))
-			flag_raise(&client->flag_pole, THREAD_CREATED);
+			flag_raise(client->flag_pole, THREAD_CREATED);
 	}
 }
-/* Stops the reading process on the client. */
+/* Stops the reading process on the client.
+ * This function call WILL BLOCK until the reading thread returns
+ * which may be several seconds, depending on the timeout set for recv().
+ *
+ * If immediate return is required, then call 'TcpClient_read_stop_async()'. */
 void TcpClient_read_stop(TcpClient* client)
 {
 	if(!client)return;
 
 	if(client->flag_pole & THREAD_IS_RUNNING)
 	{
-		tc_data_in cb = client->data_in_cb;
-		client->data_in_cb = NULL;
+		flag_raise(client->flag_pole, THREAD_STOP);
 		pthread_join(client->read_thread, NULL);
-		flag_lower(&client->flag_pole, THREAD_CREATED);
-		client->data_in_cb = cb;
+		flag_lower(client->flag_pole, THREAD_CREATED);
 	}
+}
+/* Similar to 'TcpClient_read_stop()', however it will not
+ * block, but simply raise a flag for the reading thread to stop.
+ *
+ * This is good in many cases, however it is not as safe as the
+ * synchronous version whenever the reading thread will be restarted.
+ * If the reading thread is restarted before the thread returns, it
+ * is possible that the restart will fail without warning.
+ * To ensure the thread has returned after requesting for it to stop
+ * asynchronously, call 'TcpClient_read_thread_wait()'. */
+void TcpClient_read_stop_async(TcpClient* client)
+{
+	if(!client)return;
+
+	if(client->flag_pole & THREAD_IS_RUNNING)
+	{
+		pthread_detach(client->read_thread);
+		flag_raise(client->flag_pole, THREAD_STOP);
+		flag_lower(client->flag_pole, THREAD_CREATED);
+	}
+}
+/* Polls the flag pole every millisecond until the reading thread
+ * has returned. It is highly suggested not to use this function as
+ * it is unclear how long it will block due to the timeout of 'recv()'.
+ *
+ * This should only be used when 'TcpClient_read_stop_async()' has been
+ * called and the reading thread must be restarted. */
+void TcpClient_read_thread_wait(TcpClient* client)
+{
+	if(!client)return;
+
+	while((client->flag_pole & THREAD_STOP) &&
+			(client->flag_pole & THREAD_IS_RUNNING))
+		usleep(1000);
 }
 
 	/* Getters */
@@ -253,9 +314,12 @@ void TcpClient_set_data_in_cb(TcpClient* client, tc_data_in data_in_cb)
 
 	client->data_in_cb = data_in_cb;
 	if(client->data_in_cb)
+	{
+		TcpClient_read_thread_wait(client);
 		TcpClient_read_start(client);
+	}
 	else
-		TcpClient_read_stop(client);
+		TcpClient_read_stop_async(client);
 }
 /* Sets the disconnect cb for the client.
  * This callback is called after the client has been disconnected from the host.
@@ -325,7 +389,7 @@ static TcpClient* newTcpClient_base(void* ex_data, alib_free_value free_data_cb)
 /* Creates a disconnected new TcpClient.
  *
  * Parameters:
- * 		host_addr: The address of the host.
+ * 		host_addr: The address of the host, DNS or IP.
  * 		port: The port of the host.
  * 		ex_data (OPTIONAL): Extended data for the client.
  * 		free_data_cb (OPTIONAL): Used to free the extended data of the client upon
@@ -341,17 +405,22 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
 		return(NULL);
 
 	TcpClient* client = newTcpClient_base(ex_data, free_data_cb);
-	//struct hostent* host;
+	struct hostent* host;
 
 	/* Check for errors with previous level of construction. */
 	if(!client)return(NULL);
 
 	/* Initialize members. */
-//	host = gethostbyname(host_addr);
-//	client->host_addr.sin_addr = *((struct in_addr*)host->h_addr_list);
-	client->host_addr.sin_family = AF_INET;
-	client->host_addr.sin_addr.s_addr = inet_addr(host_addr);
-	client->host_addr.sin_port = htons(port);
+	host = gethostbyname(host_addr);
+	if(host)
+	{
+		client->host_addr.sin_addr = *((struct in_addr*)*host->h_addr_list);
+		client->host_addr.sin_family = AF_INET;
+		client->host_addr.sin_port = htons(port);
+	}
+
+	if(!host)
+		delTcpClient(&client);
 
 	return(client);
 }
@@ -393,7 +462,7 @@ void delTcpClient(TcpClient** client)
 			((*client)->flag_pole & OBJECT_DELETE_STATE))return;
 
 	/* Place the object in a delete state. */
-	flag_raise(&(*client)->flag_pole, OBJECT_DELETE_STATE);
+	flag_raise((*client)->flag_pole, OBJECT_DELETE_STATE);
     TcpClient_disconnect(*client);
 	
     if((*client)->free_data_cb)

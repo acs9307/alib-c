@@ -32,7 +32,7 @@ static void remove_client_cb(void* v_sock_pack)
 		int rval = listener->disconnected(listener, sp);
 		if(rval & SCB_RVAL_STOP_SERVER)
 		{
-			flag_raise(&listener->flag_pole, THREAD_STOP);
+			flag_raise(listener->flag_pole, THREAD_STOP);
 			close(listener->ep.efd);
 			listener->ep.efd = -1;
 		}
@@ -244,7 +244,7 @@ static alib_error listen_loop(ClientListener* listener)
 				if(rval & SCB_RVAL_STOP_SERVER)
 				{
 					rval = ALIB_OK;
-					flag_raise(&listener->flag_pole, THREAD_STOP);
+					flag_raise(listener->flag_pole, THREAD_STOP);
 					if(pthread_mutex_unlock(&listener->mutex))
 						rval = ALIB_MUTEX_ERR;
 					goto f_return;
@@ -302,10 +302,10 @@ static void* threaded_run(void* v_listener)
 {
 	ClientListener* listener = (ClientListener*)v_listener;
 
-	flag_raise(&listener->flag_pole, THREAD_IS_RUNNING);
-	flag_lower(&listener->flag_pole, THREAD_STOP);
+	flag_raise(listener->flag_pole, THREAD_IS_RUNNING);
+	flag_lower(listener->flag_pole, THREAD_STOP);
 	listen_loop(listener);
-	flag_lower(&listener->flag_pole, THREAD_IS_RUNNING);
+	flag_lower(listener->flag_pole, THREAD_IS_RUNNING);
 
 	/* Epoll is no longer in use, we should close
 	 * the file descriptor. */
@@ -469,7 +469,7 @@ alib_error ClientListener_start_async(ClientListener* listener)
 			return(ALIB_OK);
 	}
 
-	flag_lower(&listener->flag_pole, THREAD_STOP);
+	flag_lower(listener->flag_pole, THREAD_STOP);
 
 	/* Initialize the epoll. */
 	err = init_epoll_tsafe(listener);
@@ -483,12 +483,12 @@ alib_error ClientListener_start_async(ClientListener* listener)
 	if(listener->flag_pole & THREAD_CREATED)
 		pthread_join(listener->thread, NULL);
 	else
-		flag_raise(&listener->flag_pole, THREAD_CREATED);
+		flag_raise(listener->flag_pole, THREAD_CREATED);
 
 	if(pthread_create(&listener->thread, NULL, threaded_run, listener))
 	{
 		/* If creation failed, then we need to return an error. */
-		flag_lower(&listener->flag_pole, THREAD_CREATED);
+		flag_lower(listener->flag_pole, THREAD_CREATED);
 		err = ALIB_THREAD_ERR;
 		goto f_error;
 	}
@@ -510,7 +510,7 @@ alib_error ClientListener_stop(ClientListener* listener)
 
 	/* Set the stop flag for the thread. */
 	if(listener->flag_pole & THREAD_IS_RUNNING)
-		flag_raise(&listener->flag_pole, THREAD_STOP);
+		flag_raise(listener->flag_pole, THREAD_STOP);
 
 	/* Close the epoll socket to break epoll_wait(). */
 	close_epoll_tsafe(listener);
@@ -520,7 +520,7 @@ alib_error ClientListener_stop(ClientListener* listener)
 	{
 		pthread_cond_broadcast(&listener->t_cond);
 		pthread_join(listener->thread, NULL);
-		flag_lower(&listener->flag_pole, THREAD_CREATED);
+		flag_lower(listener->flag_pole, THREAD_CREATED);
 	}
 
 	return(ALIB_OK);
@@ -698,7 +698,7 @@ void delClientListener(ClientListener** listener)
 		return;
 
 	/* Notify our threads that we are deleting the object. */
-	flag_raise(&(*listener)->flag_pole, OBJECT_DELETE_STATE);
+	flag_raise((*listener)->flag_pole, OBJECT_DELETE_STATE);
 	pthread_cond_broadcast(&(*listener)->t_cond);
 
 	/* Delete dynamic members. */

@@ -12,9 +12,7 @@ static char* send_msg = "hello world";
  *
  * I split everything up into separate processes as it is key to the example, however
  * you should never let FdServer run on it's own process as it will create a zombie
- * process if it is not cleaned up before the main process closes.
- *
- * The server is created as the */
+ * process if it is not cleaned up before the main process closes. */
 
 /*******FdServer*******/
 server_cb_rval on_receive(FdServer* receiver, fds_package* package, int sock)
