@@ -82,6 +82,10 @@ typedef int (*alib_compare_values)(const void*, const void*);
  *
  * The values of the parameters MUST not be modified. */
 typedef int (*alib_compare_objects)(const void**, const void**);
+
+/* Type used in 'pthread_create' as the function pointer for the
+ * thread. This was made to make casting shorter. */
+typedef void*(*pthread_proc)(void*);
 /****************************/
 
 /*******Structs*******/

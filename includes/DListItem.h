@@ -163,7 +163,7 @@ DListItem* DListItem_get(DListItem* list, size_t index, size_t* index_exceeds);
  * Returns:
  * 		A pointer to the DListItem who's value's pointer matches that of the
  * 		given 'value'. */
-DListItem* DListItem_get_by_value(DListItem* list, void* value);
+DListItem* DListItem_get_by_value(DListItem* list, const void* value);
 /* Returns the DListItem at the given relative index. If the edge
  * of the list, either beginning or end, is hit before the index
  * is reached, the item at the edge will be returned.
@@ -194,36 +194,36 @@ DListItem* DListItem_get_by_relative_index(DListItem* list, long index,
  *
  * Returns:
  * 		Number of DListItems found in the list. */
-size_t DListItem_count(DListItem* list);
+size_t DListItem_count(const DListItem* list);
 /* Gets the index of the given DListItem.
  *
  * Returns:
  * 		>=0 - Index of the item in the list.
  * 		<0  - Error code. */
-int DListItem_index(DListItem* list);
+int DListItem_index(const DListItem* list);
 
 /* Returns the first item in the list. */
-DListItem* DListItem_get_first_item(DListItem* list);
+DListItem* DListItem_get_first_item(const DListItem* list);
 /* Returns the last item in the list. */
-DListItem* DListItem_get_last_item(DListItem* list);
+DListItem* DListItem_get_last_item(const DListItem* list);
 
 /* Returns the next item in the list.
  *
  * Assumes 'list' is not null. */
-DListItem* DListItem_get_next_item(DListItem* list);
+DListItem* DListItem_get_next_item(const DListItem* list);
 /* Returns the previous item in the list.
  *
  * Assumes 'list' is not null. */
-DListItem* DListItem_get_prev_item(DListItem* list);
+DListItem* DListItem_get_prev_item(const DListItem* list);
 
 /* Returns the list item's value.
  *
  * Assumes 'item' is not null. */
-void* DListItem_get_value(DListItem* item);
+void* DListItem_get_value(const DListItem* item);
 /* Returns a pointer to the item's ListItemVal object.
  *
  * Assumes 'item' is not null. */
-ListItemVal* DListItem_get_value_object(DListItem* item);
+ListItemVal* DListItem_get_value_object(const DListItem* item);
 	/***********/
 
 	/* Setters */
@@ -256,6 +256,7 @@ void delDListItem(DListItem** list_item);
 /* Calls delDListItem on all the DListItem objects in the list. */
 void delDListItem_all(DListItem** list_item);
 /**************************/
+
 
 
 #endif

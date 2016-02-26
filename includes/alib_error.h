@@ -3,7 +3,8 @@
 
 typedef enum alib_error
 {
-	ALIB_FILE_NOT_FOUND = -20,
+	ALIB_OVERFLOW = -22,
+	ALIB_FILE_NOT_FOUND = -21,
 	ALIB_FILE_FORMAT_ERR = -19,
 	/* Operation timed out. */
 	ALIB_TIMEOUT = -18,

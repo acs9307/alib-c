@@ -12,7 +12,7 @@ static void* read_loop_proc(void* void_client)
 	struct timeval tv;
 	socklen_t tv_len = sizeof(tv);
 
-	flag_raise(client->flag_pole, THREAD_IS_RUNNING);
+	flag_raise(&client->flag_pole, THREAD_IS_RUNNING);
 
 	/* Ensure there is a timeout set for the socket.  If one does not
 	 * exist, then set the timeout to 1 second. */
@@ -57,14 +57,14 @@ static void* read_loop_proc(void* void_client)
 			if(rval & (SCB_RVAL_DELETE))
 			{
 				pthread_detach(client->read_thread);
-				flag_lower(client->flag_pole, THREAD_CREATED);
+				flag_lower(&client->flag_pole, THREAD_CREATED);
 				delTcpClient(&client);
 			}
 		}
 	}
 
 f_return:
-	flag_lower(client->flag_pole, THREAD_IS_RUNNING);
+	flag_lower(&client->flag_pole, THREAD_IS_RUNNING);
 
 	if(client->thread_returning_cb)
 		client->thread_returning_cb(client);
@@ -195,7 +195,7 @@ void TcpClient_read_start(TcpClient* client)
 {
 	if(!client)return;
 
-	flag_lower(client->flag_pole, THREAD_STOP);
+	flag_lower(&client->flag_pole, THREAD_STOP);
 	if(!(client->flag_pole & THREAD_IS_RUNNING) && client->data_in_cb
 			&& client->sock >= 0)
 	{
@@ -203,10 +203,10 @@ void TcpClient_read_start(TcpClient* client)
 		if(client->flag_pole & THREAD_CREATED)
 		{
 			pthread_join(client->read_thread, NULL);
-			flag_lower(client->flag_pole, THREAD_CREATED);
+			flag_lower(&client->flag_pole, THREAD_CREATED);
 		}
 		if(!pthread_create(&client->read_thread, NULL, read_loop_proc, client))
-			flag_raise(client->flag_pole, THREAD_CREATED);
+			flag_raise(&client->flag_pole, THREAD_CREATED);
 	}
 }
 /* Stops the reading process on the client.
@@ -220,9 +220,9 @@ void TcpClient_read_stop(TcpClient* client)
 
 	if(client->flag_pole & THREAD_IS_RUNNING)
 	{
-		flag_raise(client->flag_pole, THREAD_STOP);
+		flag_raise(&client->flag_pole, THREAD_STOP);
 		pthread_join(client->read_thread, NULL);
-		flag_lower(client->flag_pole, THREAD_CREATED);
+		flag_lower(&client->flag_pole, THREAD_CREATED);
 	}
 }
 /* Similar to 'TcpClient_read_stop()', however it will not
@@ -241,8 +241,8 @@ void TcpClient_read_stop_async(TcpClient* client)
 	if(client->flag_pole & THREAD_IS_RUNNING)
 	{
 		pthread_detach(client->read_thread);
-		flag_raise(client->flag_pole, THREAD_STOP);
-		flag_lower(client->flag_pole, THREAD_CREATED);
+		flag_raise(&client->flag_pole, THREAD_STOP);
+		flag_lower(&client->flag_pole, THREAD_CREATED);
 	}
 }
 /* Polls the flag pole every millisecond until the reading thread
@@ -462,7 +462,7 @@ void delTcpClient(TcpClient** client)
 			((*client)->flag_pole & OBJECT_DELETE_STATE))return;
 
 	/* Place the object in a delete state. */
-	flag_raise((*client)->flag_pole, OBJECT_DELETE_STATE);
+	flag_raise(&(*client)->flag_pole, OBJECT_DELETE_STATE);
     TcpClient_disconnect(*client);
 	
     if((*client)->free_data_cb)

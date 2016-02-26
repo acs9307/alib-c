@@ -234,13 +234,13 @@ static void* start_thread(void* v_ep)
 	EpollPack* ep = (EpollPack*)v_ep;
 	TcpServer* server = (TcpServer*)EpollPack_get_user_data(ep);
 
-	flag_raise(server->flag_pole, THREAD_IS_RUNNING);
+	flag_raise(&server->flag_pole, THREAD_IS_RUNNING);
 	listen_loop(ep);
 
 	/* Call the thread returning event. */
 	if(server->thread_returning)
 		server->thread_returning(server);
-	flag_lower(server->flag_pole, THREAD_IS_RUNNING);
+	flag_lower(&server->flag_pole, THREAD_IS_RUNNING);
 
 	if(ep)
 		delEpollPack(&ep);
@@ -270,7 +270,7 @@ alib_error TcpServer_start(TcpServer* server)
 	 * If this behavior is not desired, the user should first call
 	 * TcpServer_is_running() before deciding whether or not to call this function. */
 	TcpServer_stop(server);
-	flag_lower(server->flag_pole, THREAD_STOP);
+	flag_lower(&server->flag_pole, THREAD_STOP);
 
 	/* Create the socket. */
 	err = bind_and_listen(server);
@@ -306,7 +306,7 @@ alib_error TcpServer_start_async(TcpServer* server)
 
 	/* Allocate memory for the epoll_pack. */
 	EpollPack* ep = NULL;
-	flag_lower(server->flag_pole, THREAD_STOP);
+	flag_lower(&server->flag_pole, THREAD_STOP);
 
 	/* Bind the socket. */
 	int err = bind_and_listen(server);
@@ -320,13 +320,13 @@ alib_error TcpServer_start_async(TcpServer* server)
 	if(err)goto f_error;
 
 	/* Start the thread. */
-	flag_lower(server->flag_pole, THREAD_STOP);
+	flag_lower(&server->flag_pole, THREAD_STOP);
 	if(server->flag_pole & THREAD_CREATED)
 		pthread_join(server->event_thread, NULL);
-	flag_raise(server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
+	flag_raise(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
 	if(pthread_create(&server->event_thread, NULL, start_thread, ep))
 	{
-		flag_lower(server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
+		flag_lower(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
 		err = ALIB_THREAD_ERR;
 		goto f_error;
 	}
@@ -355,11 +355,11 @@ void TcpServer_stop(TcpServer* server)
 	}
 
 	/* If a thread has been created, then we need to join it. */
-	flag_raise(server->flag_pole, THREAD_STOP);
+	flag_raise(&server->flag_pole, THREAD_STOP);
 	if(server->flag_pole & THREAD_CREATED)
 	{
 		pthread_join(server->event_thread, NULL);
-		flag_lower(server->flag_pole, THREAD_CREATED);
+		flag_lower(&server->flag_pole, THREAD_CREATED);
 	}
 }
 

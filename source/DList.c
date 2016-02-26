@@ -94,6 +94,55 @@ alib_error DList_insert(DList* list, size_t index, DListItem* item)
 	list->count += item_count;
 	return(ALIB_OK);
 }
+/* Inserts an item after the given item.
+ *
+ * Parameters:
+ * 		list: The list to modify.
+ * 		curItm: The item to insert after.  This item's parent MUST BE 'list'.
+ * 		newItm: The item to insert.  This item's parent MUST BE NULL. */
+alib_error DList_insert_after(DList* list, DListItem* curItm, DListItem* newItm)
+{
+	if(!list || !curItm || curItm->base.parent != list ||
+			!newItm || !newItm->base.parent)
+		return(ALIB_BAD_ARG);
+
+	if(DListItem_insert_after(curItm, newItm) == curItm)
+		return(ALIB_UNKNOWN_ERR);
+
+	/* Check to see if we placed the object at the beginning of the list. */
+	if(!list->end || list->end->next)
+		list->end = DListItem_get_last_item(newItm);
+	if(!list->begin)
+		list->begin = DListItem_get_first_item(newItm);
+
+	++list->count;
+	return(ALIB_OK);
+}
+/* Inserts an item before the given item.
+ *
+ * Parameters:
+ * 		list: The list to modify.
+ * 		curItm: The item to insert before.  This item's parent MUST BE 'list'.
+ * 		newItm: The item to insert.  This item's parent MUST BE NULL. */
+alib_error DList_insert_before(DList* list, DListItem* curItm, DListItem* newItm)
+{
+	if(!list || !curItm || curItm->base.parent != list ||
+			!newItm || newItm->base.parent)
+		return(ALIB_BAD_ARG);
+
+	if(DListItem_insert_before(curItm, newItm) == curItm)
+		return(ALIB_UNKNOWN_ERR);
+
+	/* Check to see if we placed the object at the beginning of the list. */
+	if(!list->begin || list->begin->prev)
+		list->begin = DListItem_get_first_item(newItm);
+	if(!list->end)
+		list->end = DListItem_get_last_item(newItm);
+
+	++list->count;
+	return(ALIB_OK);
+}
+
 
 /* Moves an item from a specific index to another index.
  *
@@ -208,7 +257,7 @@ alib_error DList_remove_lsafe(DList* list, size_t index)
 {
 	if (!list || index >= list->count)return(ALIB_BAD_ARG);
 
-	ListItem* li = DList_get(list, index);
+	ListItem* li = (ListItem*)DList_get(list, index);
 	if (!li)return(ALIB_BAD_INDEX);
 
 	ListItem_mark_for_removal(li);
@@ -351,6 +400,9 @@ void DList_remove_marked_items(DList* list)
 
 /* Pulls an item from the list at the given index and returns it.
  *
+ * Items that have been pulled out will not have their reference counter
+ * decremented.
+ *
  * Parameters:
  * 		list: The list to modify.
  * 		index: The index to pull from.
@@ -386,6 +438,9 @@ DListItem* DList_pull_out(DList* list, size_t index)
 /* Pulls a set of items from the list starting at the given index.
  * If the end of the list is reached before 'count' is, then only
  * the found items will be pulled.
+ *
+ * Items that have been pulled out will not have their reference counter
+ * decremented.
  *
  * Parameters:
  * 		list: The list to modify.
@@ -433,24 +488,24 @@ DListItem* DList_pull_out_count(DList* list, size_t index, size_t count)
 /* Returns the number of items in the list.
  *
  * Assumes 'list' is not null. */
-size_t DList_get_count(DList* list){return(list->count);}
+size_t DList_get_count(const DList* list){return(list->count);}
 
 /* Returns the item at the given index.
  *
  * Returns:
  * 		NULL: Error, list is null or index is out of range.
  * 		ListItem*: The item found at the given index. */
-ListItem* DList_get(DList* list, size_t index)
+const DListItem* DList_get(const DList* list, size_t index)
 {
 	if(!list || index >= list->count)return(NULL);
 
 	if(!index)
-		return((ListItem*)list->begin);
+		return(list->begin);
 	else if(index < list->count / 2)
-		return((ListItem*)DListItem_get_by_relative_index(list->begin,
+		return(DListItem_get_by_relative_index(list->begin,
 				index, NULL));
 	else
-		return((ListItem*)DListItem_get_by_relative_index(list->end,
+		return(DListItem_get_by_relative_index(list->end,
 				index - (list->count - 1), NULL));
 }
 /* Returns the first item that has a value whose pointer points to the same
@@ -459,9 +514,19 @@ ListItem* DList_get(DList* list, size_t index)
  * Returns:
  * 		NULL: Error, no matching value.
  * 		DListItem*: A pointer to the item found. */
-ListItem* DList_get_by_value(DList* list, void* val)
+const DListItem* DList_get_by_value(const DList* list, const void* val)
 {
-	return((ListItem*)DListItem_get_by_value(list->begin, val));
+	return(DListItem_get_by_value(list->begin, val));
+}
+/* Returns the first item in the list. */
+const DListItem* DList_get_begin(const DList* list)
+{
+	return(list->begin);
+}
+/* Returns the last item in the list. */
+const DListItem* DList_get_end(const DList* list)
+{
+	return(list->end);
 }
 	/***********/
 

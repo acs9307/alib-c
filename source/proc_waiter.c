@@ -32,7 +32,7 @@ static void* thread_proc(void* unused)
 	proc_waiter** pw_it;
 	size_t pw_it_count;
 
-	flag_raise(PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
+	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
 	while(!(PROC_WAITER_FLAG_POLE & THREAD_STOP))
 	{
 		pid = wait(&status);
@@ -75,7 +75,7 @@ static void* thread_proc(void* unused)
 		}
 	}
 
-	flag_lower(PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
+	flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
 	pthread_cond_broadcast(PROC_WAITER_T_COND);
 	return(NULL);
 }
@@ -130,7 +130,7 @@ void proc_waiter_stop()
 
 	/* Raise the flag to stop the thread, this should stop
 	 * the thread whenever a child process closes. */
-	flag_raise(PROC_WAITER_FLAG_POLE, THREAD_STOP);
+	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_STOP);
 
 	/* Wake up the thread if it is waiting for a condition change. */
 	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
@@ -179,7 +179,7 @@ alib_error proc_waiter_start()
 	if(err)return(err);
 
 	/* Setup the flags as needed. */
-	flag_lower(PROC_WAITER_FLAG_POLE, THREAD_STOP);
+	flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_STOP);
 
 	/* Create the thread. */
 	pthread_mutex_lock(PROC_WAITER_MUTEX);
@@ -193,10 +193,10 @@ alib_error proc_waiter_start()
 
 	/* Raise the THREAD_IS_RUNNING flag before creating the thread so that the flag
 	 * will never misrepresent the state of the thread. */
-	flag_raise(PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
+	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
 	if(pthread_create(PROC_WAITER_THREAD, NULL, thread_proc, NULL))
 	{
-		flag_lower(PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
+		flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
 		err = ALIB_THREAD_ERR;
 		goto f_unlock;
 	}

@@ -14,9 +14,9 @@ void* threaded_listen(void* v_pack)
 {
 	struct fdc_pack* pack = (struct fdc_pack*)v_pack;
 
-	flag_raise(pack->client->flag_pole, THREAD_IS_RUNNING);
+	flag_raise(&pack->client->flag_pole, THREAD_IS_RUNNING);
 	FdClient_listen(pack->client, pack->fd_received);
-	flag_lower(pack->client->flag_pole, THREAD_IS_RUNNING);
+	flag_lower(&pack->client->flag_pole, THREAD_IS_RUNNING);
 
 	if(pack->client->sock < 0)
 		pack->fd_disconnected(pack->client);
@@ -185,9 +185,12 @@ int FdClient_listen_async(FdClient* client, fdc_fd_received_cb fd_received,
 
 	/* Clean up the thread memory if it had previously been created. */
 	if(client->flag_pole & THREAD_CREATED)
+	{
 		pthread_join(client->thread, NULL);
+		flag_lower(&client->flag_pole, THREAD_CREATED);
+	}
 	else
-		flag_raise(client->flag_pole, THREAD_CREATED);
+		flag_raise(&client->flag_pole, THREAD_CREATED);
 	/* Run the thread. */
 	return(pthread_create(&client->thread, NULL, threaded_listen, pack));
 }

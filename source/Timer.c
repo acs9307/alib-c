@@ -1,144 +1,160 @@
 #include "Timer_private.h"
 
-/*******Private Functions*******/
-/* Gets the current time based on the timers magnitude and sets
- * 'out_time'.
- *
- * Does not check for bad arguments. */
-static void get_time(uint64_t* out_time, struct TimerBase* t)
-{
-	clock_gettime(CLOCK_MONOTONIC, &t->time);
-
-	/* Get the start time. */
-	switch(t->magnitude)
-	{
-	case SECONDS:
-		*out_time = t->time.tv_sec;
-		break;
-	case MILLIS:
-		*out_time = SECONDS_TO_MILLIS(t->time.tv_sec);
-		*out_time += NANOS_TO_MILLIS(t->time.tv_nsec);
-		break;
-	case MICROS:
-		*out_time = SECONDS_TO_MICROS(t->time.tv_sec);
-		*out_time += NANOS_TO_MICROS(t->time.tv_nsec);
-		break;
-	case NANOS:
-		*out_time = SECONDS_TO_NANOS(t->time.tv_sec);
-		*out_time += t->time.tv_nsec;
-		break;
-	case PICOS:
-	default:
-		*out_time = SECONDS_TO_PICOS(t->time.tv_sec);
-		*out_time += t->time.tv_nsec;
-	}
-}
-/*******************************/
-
 /*******Public Functions*******/
-/* Resets the timer and sets the start time of the timer. */
+/* Resets the timer and sets the end time of the timer. */
 void Timer_begin(Timer* t)
 {
 	if(!t)return;
+	clock_gettime(CLOCK_MONOTONIC, &t->end_time);
+	timespec_add(&t->run_time, &t->end_time, &t->end_time);
+	t->rang = 0;
+}
+/* Same as 'Timer_begin()' except it allows you to set the end time
+ * to an earlier time. This is useful when you need to ensure the timer
+ * rings are caught with more precision as 'Timer_get_time_status()' may take
+ * several micro seconds.
+ *
+ * Parameters:
+ * 		t: The object to modify.
+ * 		interval: The time interval to subtract from the current time. */
+void Timer_begin_before(Timer* t, struct timespec* interval)
+{
+	if(!t)return;
 
-	get_time(&t->start_time, &t->base);
-	t->base.rang = 0;
+	Timer_begin(t);
+	timespec_subtract(&t->end_time, interval, &t->end_time);
 }
 /* Checks to see if the timer has rung.  Once a timer has rung, it will
  * stay in the rung state until it is reset by 'Timer_reset()'.
  *
  * Returns:
- * 		!0: Timer has rung.
- * 		 0: Timer has not rung yet. */
-char Timer_check(Timer* t)
+ * 		>0: Timer has rung.
+ * 		 0: Timer has not rung yet.
+ * 		<0: alib_error */
+int Timer_check(Timer* t)
 {
 	if(!t)return(ALIB_BAD_ARG);
-	if(t->base.rang)return(t->base.rang);
+	if(t->rang)return(t->rang);
 	
-	uint64_t now, ellapsed;
-	get_time(&now, &t->base);
-	
-	if(now < t->start_time)
-	{
-		ellapsed = UINT64_MAX - t->start_time;
-		ellapsed += now;
-	}
+	int err;
+	if((err = Timer_get_time_status(t, NULL, NULL)))
+		return(err);
 	else
-		ellapsed = now - t->start_time;
-	
-	if(ellapsed >= t->run_time)
-		t->base.rang = 1;
-	
-	return(t->base.rang);
+		return(t->rang);
 }
 
 	/* Getters */
 /* Returns the time that the timer was started.
  *
  * Assumes 't' is not null. */
-uint64_t Timer_get_start_time(Timer* t){return(t->start_time);}
+const struct timespec* Timer_get_end_time(Timer* t){return(&t->end_time);}
 /* Returns the time to wait before ringing the timer.
  *
  * Assumes 't' is not null. */
-uint64_t Timer_get_run_time(Timer* t){return(t->run_time);}
-/* Returns what magnitude the timer stores time in.
+const struct timespec* Timer_get_run_time(Timer* t){return(&t->run_time);}
+/* Returns the last checked rung state of the timer.
  *
  * Assumes 't' is not null. */
-MagnitudeTime Timer_get_magnitude(Timer* t){return(t->base.magnitude);}
+char Timer_get_rung_state(Timer* t){return(t->rang);}
+
+/* Returns both the remaining time and the overflow time for the timer.
+ * If there is no time remaining, 'rTime' will be set to 0.  If there is
+ * time remaining, 'oTime' will be set to 0.
+ *
+ * Parameters:
+ * 		t: The timer to check.
+ * 		rTime: (OPTIONAL) The remaining time.
+ * 		oTime: (OPTIOINAL) The overflow time.
+ *
+ * Returns:
+ * 		alib_error: If ALIB_UNKNOWN_ERR is returned, then something occurred where
+ * 			the calculated time value came out with */
+alib_error Timer_get_time_status(Timer* t, struct timespec* rTime,
+		struct timespec* oTime)
+{
+	if(!t)return(ALIB_BAD_ARG);
+
+	struct timespec now;
+
+	if(clock_gettime(CLOCK_MONOTONIC, &now))
+		return(ALIB_CHECK_ERRNO);
+	timespec_subtract(&t->end_time, &now, &now);
+	timespec_fix_values(&now);
+
+	/* Overrun time. */
+	if(now.tv_nsec <= 0 && now.tv_sec <= 0)
+	{
+		t->rang = 1;
+		if(rTime)
+			memset(rTime, 0, sizeof(struct timespec));
+
+		if(oTime)
+		{
+			oTime->tv_sec = -now.tv_sec;
+			oTime->tv_nsec = -now.tv_nsec;
+		}
+	}
+	/* Time remaining. */
+	else if(now.tv_sec >= 0 && now.tv_nsec >= 0)
+	{
+		if(oTime)
+			memset(oTime, 0, sizeof(struct timespec));
+
+		if(rTime)
+			*rTime = now;
+	}
+	/* Error. */
+	else
+		return(ALIB_UNKNOWN_ERR);
+
+	return(ALIB_OK);
+}
+
 	/***********/
 
 	/* Setters */
 /* Sets the run time of the timer.
  *
  * Assumes 't' is not null. */
-void Timer_set_run_time(Timer* t, uint64_t run_time){t->run_time = run_time;}
-/* Sets the magnitude of the timer.
- *
- * The timer's start and run time will be updated to the new magnitude.
- * WARNING: Overflow may occur, depending on the set internal values. */
-void Timer_set_magnitude(Timer* t, MagnitudeTime mag)
+void Timer_set_run_time(Timer* t, size_t runtime_sec, size_t runtime_nsec)
 {
-	if(!t)return;
-
-	char mag_diff = mag - t->base.magnitude;
-
-	/* If we decrease the magnitude (representing a smaller value),
-	 * then we must multiply. */
-	for(; mag_diff < 0; ++mag_diff)
-	{
-		t->run_time *= 1000;
-		t->start_time *= 1000;
-	}
-	/* Increasing the magnitude (representing a larger value),
-	 * must divide. */
-	for(; mag_diff > 0; --mag_diff)
-	{
-		t->run_time /= 1000;
-		t->start_time /= 1000;
-	}
-
-	t->base.magnitude = mag;
+	timespec_init(&t->run_time, (long)runtime_sec, (long)runtime_nsec);
 }
 	/***********/
 /******************************/
 
 /*******Constructors*******/
-/* Constructs a new Timer object. */
-Timer* newTimer(uint64_t run_time, MagnitudeTime mag)
+/* Constructs a new Timer object.
+ *
+ * Parameters:
+ * 		runtime_sec: The number of seconds to run.
+ * 		runtime_nsec: The number of micro-seconds to run. */
+Timer* newTimer(size_t runtime_sec, size_t runtime_nsec)
 {
+	if(!runtime_sec && !runtime_nsec)return(NULL);
+
 	Timer* t = malloc(sizeof(Timer));
 	if(!t)return(NULL);
 	
-	t->start_time = 0;
-	t->run_time = run_time;
-	t->base.rang = 1;
-	t->base.magnitude = mag;
+	Timer_set_run_time(t, runtime_sec, runtime_nsec);
+	memset(&t->end_time, 0, sizeof(struct timespec));
+	t->rang = 1;
 	
 	return(t);
+}
+
+/* Frees a timer object. */
+void freeTimer(Timer* t)
+{
+	if(t)
+		free(t);
 }
 /* Deletes a timer object. */
 void delTimer(Timer** t)
 {
-	delTimerBase((TimerBase**)t);
+	if(!t)return;
+
+	freeTimer(*t);
+	*t = NULL;
 }
 /**************************/

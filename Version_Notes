@@ -1,10 +1,27 @@
-----Version 1.1.3----
-    Due to the changes to 'flags.h', all calls to flag pole functions have been fixed.
+----Version 1.2.0----
+	Major version update, removed TimerLight and TimerBase and completely rewrote Timer.
+		I must of been asleep when I wrote the original versions, extremely stupid design.
+
+alib_time:
+	Added several 'timespec_' functions for operations with 'struct timespec'. 
+	Added definition for 'timespec_' (used in case the standard 'time.h' does not define it).
+
+alib_types:
+	Added convenience function pointer type 'pthread_proc'.
+
+DList:
+	Added a couple helper functions such as 'DList_get_begin()' and 'DList_get_end()'. 
+	DList functions now return DListItem instead of ListItem. 
+	Modified some method parameter types to be const. 
+	Fixed notes. 
+	
+DListItem: 
+	Modified some method parameter types to be const. 
+	Fixed notes. 
 
 flags:
     Changed flag pole functions into inline defines so that flag operations may be done atomically.
-    WARNING: Because of this change, this may break old code as previously a pointer to the flagpole
-        had to be passed where now, a simple integer may be passed.
+    Added FLAG_INIT and OBJECT_CALLBACK_STATE.
 
 TcpClient:
     Added timeout socket option when reading from a socket.  This allows the 
@@ -14,6 +31,24 @@ TcpClient:
         used internally instead of 'TcpClient_read_stop()'.
     Added DNS lookup for hosts.  Now TcpClient's host may be set to a DNS host name instead
         of just an IP address.  
+
+Timer: 
+	COMPLETELY REDESIGNED.
+	
+TimerBase:
+	REMOVED!
+	
+TimerEvent:
+	NEW!
+	
+TimerEventHandler:
+	NEW!
+	
+TimerLight:
+	REMOVED!
+	
+ThreaedTimerEvent:
+	NEW!
 
 ----Version 1.1.2----
 alib_sockets:

@@ -45,9 +45,9 @@ static void* start_thread(void* v_server)
 {
 	FdServer* server = (FdServer*)v_server;
 
-	flag_raise(server->flag_pole, THREAD_IS_RUNNING);
+	flag_raise(&server->flag_pole, THREAD_IS_RUNNING);
 	run_loop(server);
-	flag_lower(server->flag_pole, THREAD_IS_RUNNING);
+	flag_lower(&server->flag_pole, THREAD_IS_RUNNING);
 
 	return(NULL);
 }
@@ -364,7 +364,7 @@ void FdServer_stop(FdServer* server)
 {
 	if(server)
 	{
-		flag_raise(server->flag_pole, THREAD_STOP);
+		flag_raise(&server->flag_pole, THREAD_STOP);
 
 		if(server->sock > -1)
 		{
@@ -394,7 +394,7 @@ void FdServer_stop_with_join(FdServer* server)
 	if(server->flag_pole & THREAD_CREATED)
 	{
 		pthread_join(server->thread, NULL);
-		flag_lower(server->flag_pole, THREAD_CREATED);
+		flag_lower(&server->flag_pole, THREAD_CREATED);
 	}
 }
 
@@ -419,7 +419,7 @@ alib_error FdServer_run(FdServer* server)
 	if(err)
 		return(err);
 
-	flag_lower(server->flag_pole, THREAD_STOP);
+	flag_lower(&server->flag_pole, THREAD_STOP);
 	err = run_loop(server);
 
 	return(err);
@@ -444,11 +444,11 @@ int FdServer_run_on_thread(FdServer* server)
 		goto f_return;
 
 	/* Set the thread flags and start the thread. */
-	flag_lower(server->flag_pole, THREAD_STOP);
-	flag_raise(server->flag_pole, THREAD_CREATED);
+	flag_lower(&server->flag_pole, THREAD_STOP);
+	flag_raise(&server->flag_pole, THREAD_CREATED);
 	err = pthread_create(&server->thread, NULL, start_thread, server);
 	if(err)
-		flag_lower(server->flag_pole, THREAD_CREATED);
+		flag_lower(&server->flag_pole, THREAD_CREATED);
 
 f_return:
 	return(err);

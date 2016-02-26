@@ -24,40 +24,45 @@ typedef enum object_flag_pole
 
 	/* When set, the object is currently being deleted. */
 	OBJECT_DELETE_STATE = 16,
+	/* When set, the object is currently running a callback function. */
+	OBJECT_CALLBACK_STATE = 32,
 }object_flag_pole;
 
 /* Raises a binary flag, if the 'flag' was already raised, no changes
  * will occur to 'flag_pole'.
  *
  * Parameters:
- * 		flag_pole (int): The integer that stores all the related flags.
+ * 		flag_pole (flag_pole*): The integer that stores all the related flags.
  * 			If NULL, then 0 will be returned.
- * 		flag (int): The flag to raise.  This value can be a combination of AND, ORed,
+ * 		flag (size_t): The flag to raise.  This value can be a combination of AND, ORed,
  * 			and XORed values.
  *
  * Returns:
  * 		The value of the flag pole after modification. */
-#define flag_raise(flag_pole, flag) (flag_pole |= flag)
+#define flag_raise(flag_pole, flag) (*(flag_pole) |= flag)
 /* Lowers (or removes) a binary flag. If the 'flag' was not raised, no changes
  * will occur to 'flag_pole'.
  *
  * Parameters:
- * 		flag_pole: Integer that stores all the related flags.
+ * 		flag_pole (flag_pole*): Integer that stores all the related flags.
  * 			If NULL, then 0 will be returned.
- * 		flag: The flag to raise.  This value can be a combination of AND, ORed,
+ * 		flag (size_t): The flag to raise.  This value can be a combination of AND, ORed,
  * 			and XORed values.
  *
  * Returns:
  * 		The value of the flag pole after modification. */
-#define flag_lower(flag_pole, flag) (flag_pole &= ~flag)
+#define flag_lower(flag_pole, flag) (*(flag_pole) &= ~flag)
 
 /* Removes any and all flags from the flag pole.
  *
  * Parameters:
- * 		flag_pole: The flag pole to clear.
+ * 		flag_pole (flag_pole*): The flag pole to clear.
  *
  * Returns:
  * 		The value of the flag pole. */
-#define flag_clear(flag_pole) (flag_pole = 0)
+#define flag_clear(flag_pole) (*(flag_pole) = 0)
+
+/* Initalizes a flag pole. */
+#define FLAG_INIT 0
 
 #endif

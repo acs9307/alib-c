@@ -5,6 +5,11 @@ Add 'free_array()' to alib, should work similar to del[].
 
 Add an iterator object for lists. 
 
+Make objects truely inheritable by adding an alib_free_value function pointer to each object.  This should be the function used for freeing the object.  This is needed so that when an inheriting object has memory that must be freed, its destructor may be called with the base object's destructors. 
+	Try creating a base class that can be inherited by base classes for things like free object pointers. 
+	
+Make a callback class base class. 
+
 Add SList object (Singly Linked List). 
 
 Cleanup CurlObject.

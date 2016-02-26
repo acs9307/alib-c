@@ -62,9 +62,9 @@ DListItem* DListItem_insert_before(DListItem* list, DListItem* new_item)
 
 	new_item_end->next = list;
 	new_item->prev = list->prev;
-	if(new_item_end->next)
-		new_item_end->next->prev = new_item_end;
-	new_item->prev->next = new_item;
+	new_item_end->next->prev = new_item_end;
+	if(new_item_end->prev)
+		new_item->prev->next = new_item;
 
 	return(new_item);
 }
@@ -398,7 +398,7 @@ DListItem* DListItem_get(DListItem* list, size_t index, size_t* index_exceeds)
  * Returns:
  * 		A pointer to the DListItem who's value's pointer matches that of the
  * 		given 'value'. */
-DListItem* DListItem_get_by_value(DListItem* list, void* value)
+DListItem* DListItem_get_by_value(DListItem* list, const void* value)
 {
 	DListItem* list_it;
 
@@ -461,7 +461,7 @@ DListItem* DListItem_get_by_relative_index(DListItem* list, long index,
  *
  * Returns:
  * 		Number of DListItems found in the list. */
-size_t DListItem_count(DListItem* list)
+size_t DListItem_count(const DListItem* list)
 {
 	/* Check for bad argument. */
 	if(!list)return(0);
@@ -482,53 +482,48 @@ size_t DListItem_count(DListItem* list)
  * Returns:
  * 		>=0 - Index of the item in the list.
  * 		<0  - Error code. */
-int DListItem_index(DListItem* list)
+int DListItem_index(const DListItem* list)
 {
 	if(!list)return(ALIB_BAD_ARG);
 
-	DListItem* begin = DListItem_get_first_item(list);
 	int index = 0;
+	for(; list; list = list->prev, ++index);
 
-	for(; begin != list; begin = begin->next, ++index);
-
-	if(!begin)
-		return(ALIB_BAD_ARG);
-	else
-		return(index);
+	return(index);
 }
 
 /* Returns the first item in the list. */
-DListItem* DListItem_get_first_item(DListItem* list)
+DListItem* DListItem_get_first_item(const DListItem* list)
 {
 	if(!list)return(NULL);
 
 	/* Iterate backwards through the list. */
 	while(list->prev)list = list->prev;
 
-	return(list);
+	return((DListItem*)list);
 }
 /* Returns the last item in the list. */
-DListItem* DListItem_get_last_item(DListItem* list)
+DListItem* DListItem_get_last_item(const DListItem* list)
 {
 	if(!list)return(NULL);
 
 	/* Iterate forward though the list till the end. */
 	while(list->next)list = list->next;
 
-	return(list);
+	return((DListItem*)list);
 }
 
 /* Returns the next item in the list.
  *
  * Assumes 'list' is not null. */
-DListItem* DListItem_get_next_item(DListItem* list)
+DListItem* DListItem_get_next_item(const DListItem* list)
 {
 	return(list->next);
 }
 /* Returns the previous item in the list.
  *
  * Assumes 'list' is not null. */
-DListItem* DListItem_get_prev_item(DListItem* list)
+DListItem* DListItem_get_prev_item(const DListItem* list)
 {
 	return(list->prev);
 }
@@ -536,14 +531,14 @@ DListItem* DListItem_get_prev_item(DListItem* list)
 /* Returns the list item's value.
  *
  * Assumes 'item' is not null. */
-void* DListItem_get_value(DListItem* item)
+void* DListItem_get_value(const DListItem* item)
 {
 	return(item->base.val->value);
 }
 /* Returns a pointer to the item's ListItemVal object.
  *
  * Assumes 'item' is not null. */
-ListItemVal* DListItem_get_value_object(DListItem* item)
+ListItemVal* DListItem_get_value_object(const DListItem* item)
 {
 	return(item->base.val);
 }
