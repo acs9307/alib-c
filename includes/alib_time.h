@@ -6,16 +6,6 @@
 
 #include "alib_error.h"
 
-/* Included if for some reason the 'time.h' standard header file does not
- * define this. */
-#ifndef __timespec_defined
-#define __timespec_defined 1
-struct timespec
-{
-	long tv_sec;		/* Seconds.  */
-	long tv_nsec;	/* Nanoseconds.  */
-};
-#endif
 #ifndef CLOCK_MONOTONIC
 #define CLOCK_MONOTONIC 1
 #endif

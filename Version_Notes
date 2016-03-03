@@ -1,3 +1,26 @@
+----Version 1.2.1----
+alib_time:
+    Removed 'struct timespec' definition.
+
+ComDataCheck:
+	Fixed bug with 'ComDataCheck_append()' when old data has been processed.  Before if
+		'ComDataCheck_process_buffered_data()' returned CDC_COMPLETE, 'ComDataCheck_append()'
+		would return CDC_DATA_REMAINING, even if there was data waiting to be processed. 
+	Fixed notes.
+	Modified function arguments and return values to be const when possible and switched all 
+		data pointers to be 'const void*' instead of 'unsigned char*'. 
+
+TcpClient:
+    Added check to ensure socket is open when calling 'newTcpClient_from_socket()'.
+        If it is not open, then NULL will be returned.
+    Fixed bug where TcpClient did not set 'thread_returning_cb' to NULL on construction.
+    Added pthread_mutex_t and pthread_cond_t to object so that there are no race conditions when calling 'TcpClient_start()' twice in quick succession, which may occure if a user calls 'TcpClient_start()' right after setting the data in callback. 
+    Fixed 'TcpClient_read_thread_wait()' to use 'pthread_cond_wait()' instead of sleeping for 1 millisecond at a time. 
+    
+TcpServer:
+	Modified function arguments to be const when possible and set raw data pointers to be 
+		'const void*' where logical. 
+
 ----Version 1.2.0----
 	Major version update, removed TimerLight and TimerBase and completely rewrote Timer.
 		I must of been asleep when I wrote the original versions, extremely stupid design.

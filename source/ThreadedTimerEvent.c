@@ -99,7 +99,7 @@ void ThreadedTimerEvent_stop_async(ThreadedTimerEvent* event)
 	}
 }
 
-/* Blocks until an event has been raised before returning. */
+/* Blocks until an event has been raised. */
 void ThreadedTimerEvent_wait(ThreadedTimerEvent* event)
 {
 	if(pthread_mutex_lock(&event->mutex))

@@ -36,8 +36,7 @@ typedef enum ComDataCheck_RVal
 int ComDataCheck_check(ComDataCheck* cdc);
 
 /* Processes the unprocessed data in the ComDataCheck object by calling
- * 'ComDataCheck_append()' to append the unprocessed data onto the end of the object's buffer
-.
+ * 'ComDataCheck_append()' to append the unprocessed data onto the end of the object's buffer.
  *
  * Returns the same value as 'ComDataCheck_append()'. */
 int ComDataCheck_process_buffered_data(ComDataCheck* cdc);
@@ -64,9 +63,12 @@ int ComDataCheck_process_buffered_data(ComDataCheck* cdc);
  * Returns:
  *		alib_error: Error occurred.
  *		ComDataCheck_RVal: Describes the state of the object. */
-int ComDataCheck_append(ComDataCheck* cdc, unsigned char* data, size_t data_len);
+int ComDataCheck_append(ComDataCheck* cdc, const void* data, size_t data_len);
 
-/* Clears any data stored in the ComDataCheck object. */
+/* Clears data in the main buffer (processed buffer) for the object.
+ *
+ * Note that this does not clear any data stored in the
+ * unprocessed buffer. */
 void ComDataCheck_clear(ComDataCheck* cdc);
 
 /* Sends the data in the given ComDataCheck to the given 'sock'.
@@ -76,7 +78,7 @@ void ComDataCheck_clear(ComDataCheck* cdc);
  * 		sock: The socket of the node to send data to.
  * 		flags: The flags to use with 'send()'.
  */
-alib_error ComDataCheck_send(ComDataCheck* cdc, int sock, int flags);
+alib_error ComDataCheck_send(const ComDataCheck* cdc, int sock, int flags);
 /* Receives data on a given socket and places said data into the provided
  * ComDataCheck object.
  *
@@ -107,13 +109,15 @@ alib_error ComDataCheck_recv_timeout(ComDataCheck* cdc, int sock, int flags,
 /* Returns the buffer of the ComDataCheck object.
  *
  * Assumes 'cdc' is not null. */
-BinaryBuffer* ComDataCheck_get_buffer (ComDataCheck* cdc);
+const BinaryBuffer* ComDataCheck_get_buffer (const ComDataCheck* cdc);
 /* Returns the expected length of the data portion of the object.
  *
  * Assumes 'cdc' is not null. */
-int ComDataCheck_get_expected_len(ComDataCheck* cdc);
-
-void* ComDataCheck_get_extended_data(ComDataCheck* cdc);
+int ComDataCheck_get_expected_len(const ComDataCheck* cdc);
+/* Returns the extended data for the ComDataCheck object.
+ *
+ * Assumes 'cdc' is not null. */
+void* ComDataCheck_get_extended_data(const ComDataCheck* cdc);
 	/***********/
 
 	/* Setters */

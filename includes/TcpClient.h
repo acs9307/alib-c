@@ -34,8 +34,8 @@ typedef server_cb_rval(*tc_disconnect)(TcpClient* client);
  * options to be set that will effect the socket during the connection process.
  *
  * Return Behavior:
- * 		 0: Success, continues normal operations.
- * 		!0: Aborts connecting to host.  It is suggested to return 'alib_error' codes.
+ *       0: Success, continues normal operations.
+ *      !0: Aborts connecting to host.  It is suggested to return 'alib_error' codes.
  */
 typedef int (*tc_sockopt)(TcpClient* client, int socket);
 /* Called whenever the listening thread is about to return.  Only called if
@@ -50,7 +50,7 @@ typedef void (*tc_thread_returning)(TcpClient* client);
  * 		alib_error
  * 		Anything else is a return value from 'sockopt_cb'. */
 int TcpClient_connect(TcpClient* client);
-/* Disconnects the client from the host. */
+/* Disconnects the client from its host. */
 void TcpClient_disconnect(TcpClient* client);
 
 /* Sends the data to the client's host.
@@ -67,7 +67,7 @@ void TcpClient_disconnect(TcpClient* client);
 alib_error TcpClient_send(TcpClient* client, const char* data, size_t data_len);
 
 /* Starts the reading process on the client. */
-void TcpClient_read_start(TcpClient* client);
+alib_error TcpClient_read_start(TcpClient* client);
 /* Stops the reading process on the client.
  * This function call WILL BLOCK until the reading thread returns
  * which may be several seconds, depending on the timeout set for recv().
@@ -84,12 +84,7 @@ void TcpClient_read_stop(TcpClient* client);
  * To ensure the thread has returned after requesting for it to stop
  * asynchronously, call 'TcpClient_read_thread_wait()'. */
 void TcpClient_read_stop_async(TcpClient* client);
-/* Polls the flag pole every millisecond until the reading thread
- * has returned. It is highly suggested not to use this function as
- * it is unclear how long it will block due to the timeout of 'recv()'.
- *
- * This should only be used when 'TcpClient_read_stop_async()' has been
- * called and the reading thread must be restarted. */
+/* Waits for the reading thread to stop running. */
 void TcpClient_read_thread_wait(TcpClient* client);
 
 	/* Getters */
@@ -148,6 +143,11 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 /******************************/
 
 /*******Constructors*******/
+	/* Private Constructors */
+/* Base for construction of the object. Used by all other constructors. */
+static TcpClient* newTcpClient_base(void* ex_data, alib_free_value free_data_cb);
+	/************************/
+
 /* Creates a disconnected new TcpClient.
  *
  * Parameters:

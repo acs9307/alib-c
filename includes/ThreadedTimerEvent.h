@@ -26,7 +26,7 @@ void ThreadedTimerEvent_stop(ThreadedTimerEvent* event);
  * Unlike 'ThreadedTimerEvent_stop()' this will not block. */
 void ThreadedTimerEvent_stop_async(ThreadedTimerEvent* event);
 
-/* Blocks until an event has been raised before returning. */
+/* Blocks until an event has been raised. */
 void ThreadedTimerEvent_wait(ThreadedTimerEvent* event);
 
 	/* Getters */

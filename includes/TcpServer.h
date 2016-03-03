@@ -68,7 +68,7 @@ typedef server_cb_rval (*ts_client_connected_cb)(TcpServer* server,
  * 			be closed, otherwise it will call the client_data_in callback.
  */
 typedef server_cb_rval (*ts_client_data_ready_cb)(TcpServer* server,
-		socket_package* client, char** out_data, int* out_data_len);
+		socket_package* client, void** out_data, int* out_data_len);
 /* Called whenever data is received from a client socket.
  *
  * Parameters:
@@ -84,7 +84,7 @@ typedef server_cb_rval (*ts_client_data_ready_cb)(TcpServer* server,
  * 		SCB_DEFAULT - Nothing.
  */
 typedef server_cb_rval (*ts_client_data_in_cb)(TcpServer* server,
-		socket_package* client, char* buff, size_t buff_len);
+		socket_package* client, const void* buff, size_t buff_len);
 /* Called whenever a client disconnects from the server.
  *
  * Parameters:
@@ -117,7 +117,7 @@ void TcpServer_stop(TcpServer* server);
 /* Returns the socket of the server.
 *
 * Assumes 'server' is not null. */
-int TcpServer_get_sock(TcpServer* server);
+int TcpServer_get_sock(const TcpServer* server);
 /* Returns the sockaddr_in struct of the server.
  *
  * Though it is suggested not to modify this struct, sometimes the need may arise.
@@ -125,23 +125,23 @@ int TcpServer_get_sock(TcpServer* server);
  * the server, otherwise behavior is undefined.
  *
  * Assumes 'server' is not null. */
-const struct sockaddr_in* TcpServer_get_addr(TcpServer* server);
+const struct sockaddr_in* TcpServer_get_addr(const TcpServer* server);
 /* Returns 0 if the server is not running, otherwise !0.
 *
 * Assumes 'server' is not null. */
-char TcpServer_is_running(TcpServer* server);
+char TcpServer_is_running(const TcpServer* server);
 /* Returns the flag pole of the server.
 *
 * Assumes 'server' is not null. */
-flag_pole TcpServer_get_flag_pole(TcpServer* server);
+flag_pole TcpServer_get_flag_pole(const TcpServer* server);
 /* Returns a constant list of clients that are currently connected to the server.
 *
 * Assumes 'server' is not null. */
-const ArrayList* TcpServer_get_client_list(TcpServer* server);
+const ArrayList* TcpServer_get_client_list(const TcpServer* server);
 /* Returns the extended data of the server.
 *
 * Assumes 'server' is not null. */
-void* TcpServer_get_extended_data(TcpServer* server);
+void* TcpServer_get_extended_data(const TcpServer* server);
 /***********/
 
 /* Setters */

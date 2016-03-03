@@ -24,6 +24,8 @@ struct TcpClient
 	/* This is the thread that handles reading of
 	 * data. */
 	pthread_t read_thread;
+	pthread_mutex_t read_mutex;
+	pthread_cond_t read_cond;
 	flag_pole flag_pole;
 
 	void* ex_data;

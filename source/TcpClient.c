@@ -13,6 +13,7 @@ static void* read_loop_proc(void* void_client)
 	socklen_t tv_len = sizeof(tv);
 
 	flag_raise(&client->flag_pole, THREAD_IS_RUNNING);
+	pthread_cond_broadcast(&client->read_cond);
 
 	/* Ensure there is a timeout set for the socket.  If one does not
 	 * exist, then set the timeout to 1 second. */
@@ -65,6 +66,7 @@ static void* read_loop_proc(void* void_client)
 
 f_return:
 	flag_lower(&client->flag_pole, THREAD_IS_RUNNING);
+	pthread_cond_broadcast(&client->read_cond);
 
 	if(client->thread_returning_cb)
 		client->thread_returning_cb(client);
@@ -191,23 +193,28 @@ alib_error TcpClient_send(TcpClient* client, const char* data, size_t data_len)
 }
 
 /* Starts the reading process on the client. */
-void TcpClient_read_start(TcpClient* client)
+alib_error TcpClient_read_start(TcpClient* client)
 {
-	if(!client)return;
+	if(!client)return(ALIB_BAD_ARG);
+	else if((client->flag_pole & THREAD_IS_RUNNING) &&
+			!(client->flag_pole & THREAD_STOP))
+		return(ALIB_OK);
+	/* Thread has been called to stop, but hasn't yet. */
+	else
+		TcpClient_read_stop(client);
 
-	flag_lower(&client->flag_pole, THREAD_STOP);
-	if(!(client->flag_pole & THREAD_IS_RUNNING) && client->data_in_cb
-			&& client->sock >= 0)
+	if(client->data_in_cb && client->sock >= 0)
 	{
-		/* Call join to ensure all memory is cleaned up. */
-		if(client->flag_pole & THREAD_CREATED)
+		flag_lower(&client->flag_pole, THREAD_STOP);
+		flag_raise(&client->flag_pole, THREAD_CREATED);
+		if(pthread_create(&client->read_thread, NULL, read_loop_proc, client))
 		{
-			pthread_join(client->read_thread, NULL);
 			flag_lower(&client->flag_pole, THREAD_CREATED);
+			return(ALIB_THREAD_ERR);
 		}
-		if(!pthread_create(&client->read_thread, NULL, read_loop_proc, client))
-			flag_raise(&client->flag_pole, THREAD_CREATED);
 	}
+
+	return(ALIB_OK);
 }
 /* Stops the reading process on the client.
  * This function call WILL BLOCK until the reading thread returns
@@ -218,12 +225,14 @@ void TcpClient_read_stop(TcpClient* client)
 {
 	if(!client)return;
 
-	if(client->flag_pole & THREAD_IS_RUNNING)
+	if(client->flag_pole & THREAD_CREATED)
 	{
 		flag_raise(&client->flag_pole, THREAD_STOP);
 		pthread_join(client->read_thread, NULL);
 		flag_lower(&client->flag_pole, THREAD_CREATED);
 	}
+	else if(client->flag_pole & THREAD_IS_RUNNING)
+		TcpClient_read_thread_wait(client);
 }
 /* Similar to 'TcpClient_read_stop()', however it will not
  * block, but simply raise a flag for the reading thread to stop.
@@ -238,26 +247,23 @@ void TcpClient_read_stop_async(TcpClient* client)
 {
 	if(!client)return;
 
-	if(client->flag_pole & THREAD_IS_RUNNING)
+	flag_raise(&client->flag_pole, THREAD_STOP);
+	if((client->flag_pole & THREAD_CREATED) &&
+			(client->flag_pole & THREAD_IS_RUNNING))
 	{
 		pthread_detach(client->read_thread);
-		flag_raise(&client->flag_pole, THREAD_STOP);
 		flag_lower(&client->flag_pole, THREAD_CREATED);
 	}
 }
-/* Polls the flag pole every millisecond until the reading thread
- * has returned. It is highly suggested not to use this function as
- * it is unclear how long it will block due to the timeout of 'recv()'.
- *
- * This should only be used when 'TcpClient_read_stop_async()' has been
- * called and the reading thread must be restarted. */
+/* Waits for the reading thread to stop running. */
 void TcpClient_read_thread_wait(TcpClient* client)
 {
 	if(!client)return;
 
-	while((client->flag_pole & THREAD_STOP) &&
-			(client->flag_pole & THREAD_IS_RUNNING))
-		usleep(1000);
+	pthread_mutex_lock(&client->read_mutex);
+	while(client->flag_pole & THREAD_IS_RUNNING)
+		pthread_cond_wait(&client->read_cond, &client->read_mutex);
+	pthread_mutex_unlock(&client->read_mutex);
 }
 
 	/* Getters */
@@ -374,13 +380,16 @@ static TcpClient* newTcpClient_base(void* ex_data, alib_free_value free_data_cb)
 	/* Initialize members. */
 	client->ex_data = ex_data;
 	client->free_data_cb = free_data_cb;
-	client->flag_pole = 0;
+	client->flag_pole = FLAG_INIT;
+	client->read_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+	client->read_cond = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
     client->sock = -1;
     memset(&client->host_addr, 0, sizeof(client->host_addr));
 		/* Callbacks */
 	client->disconnect_cb = NULL;
 	client->data_in_cb = NULL;
 	client->sockopt_cb = NULL;
+	client->thread_returning_cb = NULL;
 
 	return(client);
 }
@@ -449,7 +458,7 @@ TcpClient* newTcpClient_from_socket(int sock, void* ex_data, alib_free_value fre
 	/* Get the host address from the socket. If the function fails, then
 	 * we should simply delete the object. */
     addr_len = sizeof(client->host_addr);
-	if(getsockname(sock, (struct sockaddr*)&client->host_addr, &addr_len))
+	if(client->sock < 0 || getsockname(sock, (struct sockaddr*)&client->host_addr, &addr_len))
 		delTcpClient(&client);
 
 	return(client);
