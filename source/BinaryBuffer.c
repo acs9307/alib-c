@@ -246,7 +246,7 @@ alib_error BinaryBuffer_remove(BinaryBuffer* buff, size_t begin, size_t end)
  * 		count: The size of 'to' in bytes. If larger than
  * 			the length of the actual 'to' buffer, then behavior
  * 			is undefined. */
-alib_error BinaryBuffer_copy(BinaryBuffer* buff, void* to, size_t count)
+alib_error BinaryBuffer_copy(const BinaryBuffer* buff, void* to, size_t count)
 {
 	if(!buff || !to)return(ALIB_BAD_ARG);
 
@@ -281,7 +281,7 @@ alib_error BinaryBuffer_copy_and_drain(BinaryBuffer* buff, void* to, size_t coun
  * 		to: The user defined buffer to copy data into.
  * 		count: The size of 'to' in bytes.  If larger than the
  * 			actual size of 'to', behavior is undefined. */
-alib_error BinaryBuffer_copy_block(BinaryBuffer* buff, size_t begin, size_t end,
+alib_error BinaryBuffer_copy_block(const BinaryBuffer* buff, size_t begin, size_t end,
 		void* to, size_t count)
 {
 	if(!buff)return(ALIB_BAD_ARG);
@@ -363,7 +363,7 @@ void* BinaryBuffer_extract_buffer(BinaryBuffer* buff)
  * function.
  *
  * Assumes 'buff' and 'file' are not null. */
-size_t BinaryBuffer_write_to_file(BinaryBuffer* buff, FILE* file)
+size_t BinaryBuffer_write_to_file(const BinaryBuffer* buff, FILE* file)
 {
 	return(fwrite(buff->buff, 1, buff->len, file));
 }
@@ -413,28 +413,28 @@ alib_error BinaryBuffer_replace(BinaryBuffer* buff, size_t index, size_t old_len
  * READONLY - MODIFY AT YOUR OWN RISK.
  *
  * Assumes 'buff' is not null. */
-const void* BinaryBuffer_get_raw_buff(BinaryBuffer* buff)
+const void* BinaryBuffer_get_raw_buff(const BinaryBuffer* buff)
 {
 	return(buff->buff);
 }
 /* Returns the length of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_length(BinaryBuffer* buff)
+size_t BinaryBuffer_get_length(const BinaryBuffer* buff)
 {
 	return(buff->len);
 }
 /* Returns the capacity of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_capacity(BinaryBuffer* buff)
+size_t BinaryBuffer_get_capacity(const BinaryBuffer* buff)
 {
 	return(buff->capacity);
 }
 /* Returns the minimum capacity of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_min_capacity(BinaryBuffer* buff)
+size_t BinaryBuffer_get_min_capacity(const BinaryBuffer* buff)
 {
 	return(buff->min_cap);
 }
@@ -442,7 +442,7 @@ size_t BinaryBuffer_get_min_capacity(BinaryBuffer* buff)
  * expand per iteration.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_max_expand_size(BinaryBuffer* buff)
+size_t BinaryBuffer_get_max_expand_size(const BinaryBuffer* buff)
 {
 	return(buff->max_expand);
 }

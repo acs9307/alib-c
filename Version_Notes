@@ -1,3 +1,11 @@
+----Version 1.2.2----
+Modified function arguments to be const when possible/logical.
+
+TcpClient:
+	Modified so that '_connect()' does not attempt to start the reading thread unless there is a 
+		data in callback set.  The return code from '_connect()' will be returned by the function
+		now.
+
 ----Version 1.2.1----
 alib_time:
     Removed 'struct timespec' definition.

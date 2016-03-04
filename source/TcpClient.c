@@ -112,9 +112,12 @@ int TcpClient_connect(TcpClient* client)
 	}
 
 	/* We are connected, start up reading thread. */
-	TcpClient_read_start(client);
+	if(client->data_in_cb)
+		err = TcpClient_read_start(client);
+	else
+		err = ALIB_OK;
 
-	return(ALIB_OK);
+	return(err);
 
 f_error:
 	close(client->sock);
