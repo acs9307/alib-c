@@ -425,7 +425,7 @@ int UvTcpServer_add_client(UvTcpServer* server, int sock)
 	if(uv_tcp_init(server->loop, client_handle) ||
 			uv_tcp_open(client_handle, sock))
 	{
-		err = ALIB_FD_ERROR;
+		err = ALIB_FD_ERR;
 		goto f_error;
 	}
 

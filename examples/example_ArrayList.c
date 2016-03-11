@@ -1,5 +1,5 @@
 #include "ArrayList.h"
-#include "StringObject.h"
+#include "String.h"
 #include <stdio.h>
 
 void print_array_data(ArrayList* list)
@@ -18,24 +18,26 @@ void print_array_data(ArrayList* list)
 int main()
 {
 	ArrayList* list = newArrayList(free);
-	StringObject* str;
+	String* str;
 
 	ArrayList_resize(list, 0);
 
-	str = newStringObject();
-	str->append(str, "hello world");
-	ArrayList_add(list, StringObject_extract_c_string(str));
-	str->append(str, "hello again!");
-	ArrayList_add(list, StringObject_extract_c_string(str));
+	/* Add. */
+	str = newString();
+	String_append(str, "hello world");
+	ArrayList_add(list, String_extract_c_string(str));
+	String_append(str, "hello again!");
+	ArrayList_add(list, String_extract_c_string(str));
 
 	print_array_data(list);
 
+	/* Resize */
 	ArrayList_resize(list, 1);
 	printf("\n\nResized ArrayList to capacity of 1!\n");
 	print_array_data(list);
 
-	str->append(str, "hey there!");
-	ArrayList_add(list, StringObject_extract_c_string(str));
+	String_append(str, "hey there!");
+	ArrayList_add(list, String_extract_c_string(str));
 	printf("\n\nAdded a string!\n");
 	print_array_data(list);
 
@@ -43,7 +45,15 @@ int main()
 	printf("\n\nResized ArrayList to capacity of 10!\n");
 	print_array_data(list);
 
+	/* Contains */
+		/* Add one to the string length so that we compare the null terminator as well.
+		 * See below examples for why. */
+	printf("contains 'hey there!': %d\n", ArrayList_contains(list, "hey there!", strlen("hey there!") + 1));
+	printf("contains 'hey': %d\n", ArrayList_contains(list, "hey", strlen("hey")));
+	printf("contains 'there!': %d\n", ArrayList_contains(list, "there!", strlen("there!") + 1));
+
 	delArrayList(&list);
-	delStringObject(&str);
+	delString(&str);
 	return(0);
 }
+

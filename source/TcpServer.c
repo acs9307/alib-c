@@ -39,7 +39,7 @@ static alib_error bind_and_listen(TcpServer* server)
 	/* Create the server's socket. */
 	server->sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(server->sock < 0)
-		return(ALIB_FD_ERROR);
+		return(ALIB_FD_ERR);
 	setsockopt(server->sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
 	/* Bind the server's socket. */
@@ -89,11 +89,11 @@ static alib_error listen_loop(EpollPack* ep)
 	if(!data_in_buff)return(ALIB_MEM_ERR);
 
 	/* While our socket is open, then we will keep running. */
-	while(server->sock > -1)
+	while(!(server->flag_pole & THREAD_STOP) && server->sock > -1)
 	{
 		/* Wait for an event to come. */
 		event_count = epoll_wait(EpollPack_get_efd(ep), EpollPack_get_triggered_events(ep), EpollPack_get_triggered_event_len(ep),
-				-1);
+				server->epoll_wait_timeout);
 		if(!event_count)continue;
 
 		/* The the event_count is less than zero, then an error occurred. */
@@ -136,7 +136,16 @@ static alib_error listen_loop(EpollPack* ep)
 				/* Call the client connected callback. */
 				if(server->client_connected)
 				{
+					flag_raise(&server->flag_pole, OBJECT_CALLBACK_STATE);
 					rval = server->client_connected(server, client_pack);
+					flag_lower(&server->flag_pole, OBJECT_CALLBACK_STATE);
+
+					if(server->flag_pole & OBJECT_DELETE_STATE)
+					{
+						rval = ALIB_OK;
+						goto f_return;
+					}
+
 					if(rval & (SCB_RVAL_CLOSE_CLIENT | SCB_RVAL_STOP_SERVER))
 						close_and_del_socket_package(&client_pack);
 					if(rval & SCB_RVAL_STOP_SERVER)
@@ -181,8 +190,19 @@ static alib_error listen_loop(EpollPack* ep)
 				/* Call the client_data_ready callback. */
 				if(server->client_data_ready)
 				{
+					flag_raise(&server->flag_pole, OBJECT_CALLBACK_STATE);
 					rval = server->client_data_ready(server, client, &data_in_buff,
 							&data_in_count);
+					flag_lower(&server->flag_pole, OBJECT_CALLBACK_STATE);
+
+					/* Check delete state. */
+					if(server->flag_pole & OBJECT_DELETE_STATE)
+					{
+						rval = ALIB_OK;
+						goto f_return;
+					}
+
+					/* Check return value. */
 					if(rval & SCB_RVAL_CLOSE_CLIENT)
 						ArrayList_remove(server->client_list, client);
 					if(rval & SCB_RVAL_STOP_SERVER)
@@ -204,8 +224,19 @@ static alib_error listen_loop(EpollPack* ep)
 				/* Call the client data in callback. */
 				else if(server->client_data_in)
 				{
+					flag_raise(&server->flag_pole, OBJECT_CALLBACK_STATE);
 					rval = server->client_data_in(server, client, data_in_buff,
 							data_in_count);
+					flag_lower(&server->flag_pole, OBJECT_CALLBACK_STATE);
+
+					/* Check object delete state. */
+					if(server->flag_pole & OBJECT_DELETE_STATE)
+					{
+						rval = ALIB_OK;
+						goto f_return;
+					}
+
+					/* Check callback return value. */
 					if(rval & SCB_RVAL_CLOSE_CLIENT)
 						ArrayList_remove(server->client_list, client);
 					if(rval & SCB_RVAL_STOP_SERVER)
@@ -222,45 +253,73 @@ static alib_error listen_loop(EpollPack* ep)
 f_return:
 	if(data_in_buff)
 		free(data_in_buff);
+	ArrayList_clear_tsafe(server->client_list);
 
 	return(rval);
 }
 
 /* Starts the listening thread for the server. */
-static void* start_thread(void* v_ep)
+static void start_thread(EpollPack* ep)
 {
-	if(!v_ep)return(NULL);
+	if(!ep)return;
 
-	EpollPack* ep = (EpollPack*)v_ep;
 	TcpServer* server = (TcpServer*)EpollPack_get_user_data(ep);
+	if(!server)return;
 
 	flag_raise(&server->flag_pole, THREAD_IS_RUNNING);
+	pthread_cond_broadcast(&server->event_cond);
+
 	listen_loop(ep);
+	if(server->flag_pole & OBJECT_DELETE_STATE)
+	{
+		flag_lower(&server->flag_pole, THREAD_IS_RUNNING);
+		freeTcpServer(server);
+		goto f_cleanup;
+	}
 
 	/* Call the thread returning event. */
 	if(server->thread_returning)
+	{
+		flag_raise(&server->flag_pole, OBJECT_CALLBACK_STATE);
 		server->thread_returning(server);
-	flag_lower(&server->flag_pole, THREAD_IS_RUNNING);
+		flag_lower(&server->flag_pole, OBJECT_CALLBACK_STATE);
 
+		if(server->flag_pole & OBJECT_DELETE_STATE)
+		{
+			flag_lower(&server->flag_pole, THREAD_IS_RUNNING);
+			freeTcpServer(server);
+			goto f_cleanup;
+		}
+	}
+
+	TcpServer_stop_async(server);
+	flag_lower(&server->flag_pole, THREAD_IS_RUNNING);
+	pthread_cond_broadcast(&server->event_cond);
+
+f_cleanup:
+	/* Cleanup. */
 	if(ep)
 		delEpollPack(&ep);
-	return(NULL);
 }
 /*******************************/
 
 /*******Public Functions*******/
 /* Starts the TcpServer on the current thread.  If the server is already
  * running, it will first be stopped then restarted. To prevent this behavior, first
- * check 'TcpServer_is_running()'. */
+ * check 'TcpServer_is_running()'.
+ *
+ * WILL BLOCK until previous instance of 'server' has finished running. */
 alib_error TcpServer_start(TcpServer* server)
 {
 	if(!server)return(ALIB_BAD_ARG);
+		else if((server->flag_pole & OBJECT_DELETE_STATE))
+			return(ALIB_STATE_ERR);
 
 	int err;
 	struct EpollPack* ep = newEpollPack(0, server, NULL);
 	if(!ep)
 	{
-		err = ALIB_FD_ERROR;
+		err = ALIB_FD_ERR;
 		goto f_return;
 	}
 
@@ -282,14 +341,11 @@ alib_error TcpServer_start(TcpServer* server)
 
 	/* Start listening. */
 	err = listen_loop(ep);
+	if(server->flag_pole & OBJECT_DELETE_STATE)
+		return(err);
 
 f_return:
-	/* Cleanup. */
-	if(server->sock > -1)
-	{
-		close(server->sock);
-		server->sock = -1;
-	}
+	TcpServer_stop(server);
 	delEpollPack(&ep);
 
 	return(err);
@@ -299,14 +355,19 @@ f_return:
 alib_error TcpServer_start_async(TcpServer* server)
 {
 	if(!server)return(ALIB_BAD_ARG);
+	else if((server->flag_pole & OBJECT_DELETE_STATE))
+		return(ALIB_STATE_ERR);
 
 	/* If the thread is already running, then we don't need to do anything. */
-	if(server->flag_pole & THREAD_IS_RUNNING)
+	if((server->flag_pole & THREAD_IS_RUNNING) &&
+			!(server->flag_pole & THREAD_IS_RUNNING))
 		return(ALIB_OK);
+	else if((server->flag_pole & THREAD_STOP) &&
+			(server->flag_pole & THREAD_IS_RUNNING))
+		TcpServer_wait_for_thread_return(server);
 
 	/* Allocate memory for the epoll_pack. */
 	EpollPack* ep = NULL;
-	flag_lower(&server->flag_pole, THREAD_STOP);
 
 	/* Bind the socket. */
 	int err = bind_and_listen(server);
@@ -321,10 +382,8 @@ alib_error TcpServer_start_async(TcpServer* server)
 
 	/* Start the thread. */
 	flag_lower(&server->flag_pole, THREAD_STOP);
-	if(server->flag_pole & THREAD_CREATED)
-		pthread_join(server->event_thread, NULL);
 	flag_raise(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
-	if(pthread_create(&server->event_thread, NULL, start_thread, ep))
+	if(pthread_create(&server->event_thread, NULL, (pthread_proc)start_thread, ep))
 	{
 		flag_lower(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
 		err = ALIB_THREAD_ERR;
@@ -332,20 +391,30 @@ alib_error TcpServer_start_async(TcpServer* server)
 	}
 
 	return(ALIB_OK);
+
 f_error:
-	/* If an error occurs, we must close the sockets and free the memory. */
-	if(server->sock > -1)
-	{
-		close(server->sock);
-		server->sock = -1;
-	}
+	TcpServer_stop_async(server);
 	delEpollPack(&ep);
 
 	return(err);
 }
 
-/* Stops the TcpServer. */
+/* Stops the TcpServer.
+ *
+ * WILL BLOCK until the listener thread has been stopped.
+ * Safe to call in callbacks. */
 void TcpServer_stop(TcpServer* server)
+{
+	TcpServer_stop_async(server);
+
+	/* Wait for the thread to stop if we are not in a callback state. */
+	if(!(server->flag_pole & OBJECT_CALLBACK_STATE))
+		TcpServer_wait_for_thread_return(server);
+}
+/* Requests that the server loop be stopped and returns immediately.
+ *
+ * Safe to call in callbacks. */
+void TcpServer_stop_async(TcpServer* server)
 {
 	/* We need to close the socket to signify that the server is shutting down. */
 	if(server->sock > -1)
@@ -356,11 +425,28 @@ void TcpServer_stop(TcpServer* server)
 
 	/* If a thread has been created, then we need to join it. */
 	flag_raise(&server->flag_pole, THREAD_STOP);
+	pthread_cond_broadcast(&server->event_cond);
 	if(server->flag_pole & THREAD_CREATED)
 	{
-		pthread_join(server->event_thread, NULL);
+		pthread_detach(server->event_thread);
 		flag_lower(&server->flag_pole, THREAD_CREATED);
 	}
+}
+
+/* Waits for the server thread to return before returning.
+ * If the server was not run using 'TcpServer_start_async()', then the
+ * function returns immediately.
+ *
+ * If called from callback, function returns immediately. */
+void TcpServer_wait_for_thread_return(TcpServer* server)
+{
+	if(!server || (server->flag_pole & OBJECT_CALLBACK_STATE))return;
+
+	if(pthread_mutex_lock(&server->event_mutex))
+		return;
+	while(server->flag_pole & THREAD_IS_RUNNING)
+		pthread_cond_wait(&server->event_cond, &server->event_mutex);
+	pthread_mutex_unlock(&server->event_mutex);
 }
 
 	/* Getters */
@@ -384,6 +470,11 @@ char TcpServer_is_running(const TcpServer* server){return((server->sock > -1));}
  *
  * Assumes 'server' is not null. */
 flag_pole TcpServer_get_flag_pole(const TcpServer* server){return(server->flag_pole);}
+/* Returns the number of milliseconds 'epoll_wait()' will wait before checking
+ * the status of the server.
+ *
+ * Assumes 'server' is not null. */
+int TcpServer_get_epoll_wait_timeout(const TcpServer* server){return(server->epoll_wait_timeout);}
 /* Returns a constant list of clients that are currently connected to the server.
  *
  * Assumes 'server' is not null. */
@@ -395,6 +486,25 @@ void* TcpServer_get_extended_data(const TcpServer* server){return(server->ex_dat
 	/***********/
 
 	/* Setters */
+/* Sets the timeout for 'epoll_wait()'.  This is the number of milliseconds
+ * the server will wait before checking the server state in the listen thread.
+ *
+ * If started using 'TcpServer_start()' and the server is not stopped except in
+ * the callback functions, then it is safe to set the timeout to '-1'.
+ *
+ * Default value is 1 second.
+ *
+ * Parameters:
+ * 		server: The object to modify.
+ * 		timeout_millis: The number of milliseconds to wait before returning
+ * 			from 'epoll_wait()'.  If -1, the timeout is equal to infinity. */
+void TcpServer_set_epoll_wait_timeout(TcpServer* server, int timeout_millis)
+{
+	if(timeout_millis < 0)
+		timeout_millis = -1;
+	server->epoll_wait_timeout = timeout_millis;
+}
+
 /* Sets the callback for when a client connects to the server.
  *
  * Assumes 'server' is not null. */
@@ -476,15 +586,19 @@ TcpServer* newTcpServer(uint16_t port, void* ex_data,
 
 	/* Initialize other members. */
 	server->sock = -1;
-	server->flag_pole = 0;
+	server->flag_pole = FLAG_INIT;
 	server->ex_data = ex_data;
+	server->epoll_wait_timeout = 1000;
 	server->free_data_cb = free_data_cb;
+	server->event_mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+	server->event_cond = (pthread_cond_t)PTHREAD_COND_INITIALIZER;
 
 	/* Initialize callback pointers. */
 	server->client_connected = NULL;
 	server->client_data_in = NULL;
 	server->client_disconnected = NULL;
 	server->client_data_ready = NULL;
+	server->thread_returning = NULL;
 
 	/* Initialize dynamic members. */
 	server->client_list = newArrayList(remove_client_cb);
@@ -495,17 +609,35 @@ TcpServer* newTcpServer(uint16_t port, void* ex_data,
 
 	return(server);
 }
+void freeTcpServer(TcpServer* server)
+{
+	if(!server)return;
+
+	TcpServer_stop(server);
+	flag_raise(&server->flag_pole, OBJECT_DELETE_STATE);
+
+	/* Ensure the thread is not running and that we are
+	 * no longer in a callback state before freeing members. */
+	if(!(server->flag_pole & THREAD_IS_RUNNING) &&
+			!(server->flag_pole & OBJECT_CALLBACK_STATE))
+	{
+		/* Ensure the user didn't restart the server after being in a delete state. */
+		TcpServer_stop(server);
+
+		flag_raise(&server->flag_pole, OBJECT_CALLBACK_STATE);
+		if(server->free_data_cb)
+			server->free_data_cb(server->ex_data);
+		flag_lower(&server->flag_pole, OBJECT_CALLBACK_STATE);
+
+		delArrayList(&server->client_list);
+		free(server);
+	}
+}
 void delTcpServer(TcpServer** server)
 {
-	if(!server || !*server)return;
+	if(!server)return;
 
-	TcpServer_stop(*server);
-
-	if((*server)->free_data_cb)
-		(*server)->free_data_cb((*server)->ex_data);
-	delArrayList(&(*server)->client_list);
-
-	free(*server);
+	freeTcpServer(*server);
 	*server = NULL;
 }
 /**************************/

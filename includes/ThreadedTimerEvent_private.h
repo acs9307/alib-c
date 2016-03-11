@@ -9,7 +9,7 @@
 																				\
 	pthread_t thread;															\
 	pthread_mutex_t mutex;														\
-	pthread_cond_t cond
+	pthread_cond_t cond;
 
 /* A TimerEvent that runs on an independent thread.  When started, this will wait for the specified time
  * and then calls the event callbacks.  This is a better alternative to 'TimerEventHandler' if only a single

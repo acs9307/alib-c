@@ -153,7 +153,7 @@ alib_error UvTcp_add_socket_to_loop(uv_loop_t* loop, int sock, uv_tcp_t** out_cl
 	if(uv_tcp_init(loop, handle) ||
 			uv_tcp_open(handle, sock))
 	{
-		err = ALIB_FD_ERROR;
+		err = ALIB_FD_ERR;
 		goto f_error;
 	}
 

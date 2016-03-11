@@ -27,6 +27,7 @@ int EpollPack_add_sock(EpollPack* ep, uint32_t event_type, int sock)
 	if(!ep || sock < 0)return(ALIB_BAD_ARG);
 
 	pthread_mutex_lock(&ep->mutex);
+	memset(&ep->mod_event, 0, sizeof(ep->mod_event));
 	ep->mod_event.data.fd = sock;
 	ep->mod_event.events = event_type;
 	err = epoll_ctl(ep->efd, EPOLL_CTL_ADD, sock, &ep->mod_event);

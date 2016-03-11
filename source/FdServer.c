@@ -78,7 +78,7 @@ static alib_error run_init(FdServer* server)
 	server->ep.efd = epoll_create(DEFAULT_BACKLOG_SIZE);
 	if(server->ep.efd < 0)
 	{
-		rval = ALIB_FD_ERROR;
+		rval = ALIB_FD_ERR;
 		goto f_error;
 	}
 	server->ep.event.data.fd = server->sock;
@@ -353,7 +353,7 @@ alib_error FdServer_bind(FdServer* server)
 f_error:
 	server->sock = -1;
 
-	return(ALIB_FD_ERROR);
+	return(ALIB_FD_ERR);
 }
 
 /* Stops the FdServer.  This will not join the thread if async listening was used.

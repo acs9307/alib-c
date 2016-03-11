@@ -22,7 +22,7 @@ alib_error tcp_send_data_by_host(const char* host_ip_addr, uint16_t port,
 	/* Allocate the socket. */
 	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(sock < 0)
-		return(ALIB_FD_ERROR);
+		return(ALIB_FD_ERR);
 
 	/* Initialize the host address struct. */
 	memset(&host_addr, 0, sizeof(host_addr));

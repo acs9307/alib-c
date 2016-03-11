@@ -45,6 +45,10 @@ int Timer_check(Timer* t);
  *
  * Assumes 't' is not null. */
 const struct timespec* Timer_get_end_time(Timer* t);
+/* Returns the real time version of the end time.
+ *
+ * If an error occurs, function returns a zeroed out timespec. */
+struct timespec Timer_get_end_time_real_time(Timer* t);
 /* Returns the time to wait before ringing the timer.
  *
  * Assumes 't' is not null. */

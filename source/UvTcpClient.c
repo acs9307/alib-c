@@ -123,7 +123,7 @@ alib_error UvTcpClient_connect(UvTcpClient* client)
 
 	/* Open a new socket. */
 	client->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-	if(client->sock < 0)return(ALIB_FD_ERROR);
+	if(client->sock < 0)return(ALIB_FD_ERR);
 	err_code = uv_tcp_open(&client->handle, client->sock);
 	if(err_code)return(ALIB_TCP_CONNECT_ERR);
 
@@ -168,7 +168,7 @@ alib_error UvTcpClient_connect_threaded(UvTcpClient* client)
 
 	/* Open a new socket. */
 	client->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-	if(client->sock < 0)return(ALIB_FD_ERROR);
+	if(client->sock < 0)return(ALIB_FD_ERR);
 	err_code = uv_tcp_open(&client->handle, client->sock);
 	if(err_code)return(ALIB_TCP_CONNECT_ERR);
 

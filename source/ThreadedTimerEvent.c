@@ -7,9 +7,9 @@ static void timer_loop(ThreadedTimerEvent* event)
 	if(!event)return;
 
 	char rang;
+	struct timespec end_time;
 
 	flag_raise(&event->fp, THREAD_IS_RUNNING);
-	pthread_mutex_lock(&event->mutex);
 	while(!(event->fp & THREAD_STOP))
 	{
 		TimerEvent_check((TimerEvent*)event, &rang);
@@ -18,12 +18,17 @@ static void timer_loop(ThreadedTimerEvent* event)
 		if(rang)
 			pthread_cond_broadcast(&event->cond);
 
+		if(pthread_mutex_lock(&event->mutex))
+				flag_raise(&event->fp, THREAD_STOP);
+		end_time = Timer_get_end_time_real_time(event->timer);
 		pthread_cond_timedwait(&event->cond, &event->mutex,
-				Timer_get_end_time(event->timer));
+				&end_time);
+
+		pthread_mutex_unlock(&event->mutex);
 	}
-	pthread_mutex_unlock(&event->mutex);
 	flag_lower(&event->fp, THREAD_IS_RUNNING);
 
+	pthread_cond_broadcast(&event->cond);
 	pthread_cond_broadcast(&event->cond);
 }
 /*******************************/
@@ -99,13 +104,17 @@ void ThreadedTimerEvent_stop_async(ThreadedTimerEvent* event)
 	}
 }
 
-/* Blocks until an event has been raised. */
+/* Blocks until an event has been raised. Returns immediately
+ * if the event is not running. */
 void ThreadedTimerEvent_wait(ThreadedTimerEvent* event)
 {
-	if(pthread_mutex_lock(&event->mutex))
-		return;
-	pthread_cond_wait(&event->cond, &event->mutex);
-	pthread_mutex_unlock(&event->mutex);
+	if(event->fp & THREAD_IS_RUNNING)
+	{
+		if(pthread_mutex_lock(&event->mutex))
+			return;
+		pthread_cond_wait(&event->cond, &event->mutex);
+		pthread_mutex_unlock(&event->mutex);
+	}
 }
 
 	/* Getters */

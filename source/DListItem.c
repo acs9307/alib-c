@@ -513,19 +513,21 @@ DListItem* DListItem_get_last_item(const DListItem* list)
 	return((DListItem*)list);
 }
 
-/* Returns the next item in the list.
- *
- * Assumes 'list' is not null. */
+/* Returns the next item in the list. */
 DListItem* DListItem_get_next_item(const DListItem* list)
 {
-	return(list->next);
+	if(!list)
+		return(NULL);
+	else
+		return(list->next);
 }
-/* Returns the previous item in the list.
- *
- * Assumes 'list' is not null. */
+/* Returns the previous item in the list. */
 DListItem* DListItem_get_prev_item(const DListItem* list)
 {
-	return(list->prev);
+	if(!list)
+		return(NULL);
+	else
+		return(list->prev);
 }
 
 /* Returns the list item's value.

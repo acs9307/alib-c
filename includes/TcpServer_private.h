@@ -16,6 +16,9 @@ struct TcpServer
 
 	/* Listening thread. */
 	pthread_t event_thread;
+	pthread_mutex_t event_mutex;
+	pthread_cond_t event_cond;
+	int epoll_wait_timeout;
 	flag_pole flag_pole;
 
 	/* List of clients. List type is of 'socket_package'. */

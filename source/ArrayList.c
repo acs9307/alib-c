@@ -173,7 +173,7 @@ void ArrayList_remove(ArrayList* list, void* item)
  * 		void*: Pointer to the first item found.
  * 		NULL: No item found or an error occurred.
  */
-void* ArrayList_get_first_item(ArrayList* list)
+void* ArrayList_get_first_item(const ArrayList* list)
 {
 	void** list_it;
 	size_t it_count;
@@ -201,9 +201,9 @@ void* ArrayList_get_first_item(ArrayList* list)
  * 		NULL: Error occurred or no matching value found.
  * 		void*: The pointer to the value that matches the given 'val' according to the 'compare_cb'.
  */
-const void* ArrayList_find_item_by_value(ArrayList* list, void* val, alib_compare_values compare_cb)
+const void* ArrayList_find_item_by_value(const ArrayList* list, const void* val, alib_compare_values compare_cb)
 {
-	void** val_it;
+	void* const* val_it;
 	size_t val_count;
 
 	if(!list || !compare_cb)return(NULL);
@@ -220,6 +220,21 @@ const void* ArrayList_find_item_by_value(ArrayList* list, void* val, alib_compar
 	}
 
 	return(NULL);
+}
+/* Returns true if 'data' matches an item in 'list' */
+char ArrayList_contains(const ArrayList* list, const void* data, size_t data_len)
+{
+	if(!list || !data)return(0);
+
+	const void** arrayIt = ArrayList_get_array_ptr(list);
+	const void** arrayEnd = arrayIt + ArrayList_get_count(list);
+
+	for(; arrayIt < arrayEnd; ++arrayIt)
+	{
+		if(*arrayIt && memcmp(data, *arrayIt, data_len) == 0)
+			return(1);
+	}
+	return(0);
 }
 
 /* Removes all the items from the list without actually deleting the list.
@@ -421,25 +436,42 @@ alib_error ArrayList_sort(ArrayList* list, alib_compare_objects compare_cb)
 	return(r_code);
 }
 
+/* Extracts the internal array and returns it.
+ * After extraction, the list neither owns nor knows of the
+ * array, therefore the user MUST FREE THE MEMORY pointed to by
+ * the return value. */
+void** ArrayList_extract_array(ArrayList* list)
+{
+	if(!list)return(NULL);
+
+	void** rval = list->list;
+
+	list->capacity = 0;
+	list->count = 0;
+	list->list = NULL;
+
+	return(rval);
+}
+
 	/* Getters */
 /* Returns the number of items are in the array.
  *
  * Assumes 'list' is not null. */
-size_t ArrayList_get_count(ArrayList* list)
+size_t ArrayList_get_count(const ArrayList* list)
 {
 	return(list->count);
 }
 /* Returns the current capacity of the list.
  *
  * Assumes 'list' is not null. */
-size_t ArrayList_get_capacity(ArrayList* list)
+size_t ArrayList_get_capacity(const ArrayList* list)
 {
 	return(list->capacity);
 }
 /* Returns the maximum capacity of the list.
  *
  * Assumes 'list' is not null. */
-size_t ArrayList_get_max_capacity(ArrayList* list)
+size_t ArrayList_get_max_capacity(const ArrayList* list)
 {
 	return(list->max_cap);
 }
@@ -448,7 +480,7 @@ size_t ArrayList_get_max_capacity(ArrayList* list)
  * should only be read and never modified.
  *
  * Assumes 'list' is not null. */
-const void** ArrayList_get_array_ptr(ArrayList* list)
+const void** ArrayList_get_array_ptr(const ArrayList* list)
 {
 	return((const void**)list->list);
 }
@@ -468,9 +500,9 @@ const void** ArrayList_get_array_ptr(ArrayList* list)
  * 		It is not suggested to use this unless the object has first
  * 		been sorted as values aren't guaranteed nor are they static.
  */
-const void* ArrayList_get_by_index(ArrayList* list, size_t v_index)
+const void* ArrayList_get_by_index(const ArrayList* list, size_t v_index)
 {
-	void** array_it;
+	void* const* array_it;
 	size_t array_count;
 
 	if(!list || v_index >= list->count)return(NULL);
@@ -502,9 +534,9 @@ const void* ArrayList_get_by_index(ArrayList* list, size_t v_index)
  * 		-1: Item not found.
  * 		ALIB_BAD_ARG: As of this writing it is also -1, but is called
  * 			if a bad argument was passed. */
-long ArrayList_get_item_index(ArrayList* list, const void* item)
+long ArrayList_get_item_index(const ArrayList* list, const void* item)
 {
-	void** array_it;
+	void* const* array_it;
 	size_t array_count;
 	size_t array_index;
 
@@ -647,30 +679,6 @@ void ArrayList_remove_no_free_tsafe(ArrayList* list, void* item)
 	else
 		ArrayList_remove_no_free(list, item);
 }
-/* Same as ArrayList_get_first_item() but with mutexing. */
-void* ArrayList_get_first_item_tsafe(ArrayList* list)
-{
-	/* Needed to store the value of ArrayList_get_first_item() so that
-	 * it can be returned. */
-	void* item;
-
-	/* Check for errors. */
-	if(!list)return(NULL);
-
-	/* If mutexes are enabled, then lock and unlock the mutexes as
-	 * needed. */
-	if(list->use_mutex)
-	{
-		pthread_mutex_lock(&list->mutex);
-		item = ArrayList_get_first_item(list);
-		pthread_mutex_unlock(&list->mutex);
-
-		return(item);
-	}
-	/* Otherwise just call ArrayList_get_first_item. */
-	else
-		return(ArrayList_get_first_item(list));
-}
 /* Same as ArrayList_find_item_by_value() but with mutexing. */
 const void* ArrayList_find_item_by_value_tsafe(ArrayList* list, void* val, alib_compare_values compare_cb)
 {
@@ -773,7 +781,51 @@ alib_error ArrayList_sort_tsafe(ArrayList* list, alib_compare_objects compare_cb
 	return(rval);
 }
 
+/* Same as ArrayList_extract_array() but with mutexing. */
+void** ArrayList_extract_array_tsafe(ArrayList* list)
+{
+	void** rval;
+
+	if(!list)return(NULL);
+
+	if(list->use_mutex)
+	{
+		pthread_mutex_lock(&list->mutex);
+		rval = ArrayList_extract_array(list);
+		pthread_mutex_unlock(&list->mutex);
+	}
+	else
+		rval = ArrayList_extract_array(list);
+
+	return(rval);
+}
+
 		/* Getters */
+/* Same as ArrayList_get_first_item() but with mutexing. */
+void* ArrayList_get_first_item_tsafe(ArrayList* list)
+{
+	/* Needed to store the value of ArrayList_get_first_item() so that
+	 * it can be returned. */
+	void* item;
+
+	/* Check for errors. */
+	if(!list)return(NULL);
+
+	/* If mutexes are enabled, then lock and unlock the mutexes as
+	 * needed. */
+	if(list->use_mutex)
+	{
+		pthread_mutex_lock(&list->mutex);
+		item = ArrayList_get_first_item(list);
+		pthread_mutex_unlock(&list->mutex);
+
+		return(item);
+	}
+	/* Otherwise just call ArrayList_get_first_item. */
+	else
+		return(ArrayList_get_first_item(list));
+}
+
 /* Same as ArrayList_get_by_index() but with mutexing. */
 const void* ArrayList_get_by_index_tsafe(ArrayList* list, size_t index)
 {

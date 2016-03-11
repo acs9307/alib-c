@@ -92,7 +92,7 @@ int TcpClient_connect(TcpClient* client)
 	/* Create the socket. */
 	client->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(client->sock < 0)
-		return(ALIB_FD_ERROR);
+		return(ALIB_FD_ERR);
 
 	/* Check to see if we need to set any options for the connection's
 	 * socket. */
@@ -156,7 +156,8 @@ void TcpClient_disconnect(TcpClient* client)
  * Parameters:
  * 		client: The client who will be sending the data.
  * 		data: The data to be sent.
- * 		data_len: The length of the data to be sent.
+ * 		data_len: The length of the data to be sent.  If 0,
+ * 			length will be calculated with 'strlen(data)'.
  *
  * Returns:
  * 		An alib_error that describes the error. */

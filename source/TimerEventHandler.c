@@ -155,7 +155,14 @@ static void timer_loop(TimerEventHandler* handler)
 					goto f_return;
 			}
 			else
-				pthread_cond_timedwait(&handler->cond, &handler->mutex, &eTime);
+			{
+				eTime = Timer_get_end_time_real_time(
+						TimerEvent_get_timer((TimerEvent*)DListItem_get_value(itm)));
+				printf("DEBU1\n");
+				pthread_cond_timedwait(&handler->cond, &handler->mutex,
+						&eTime);
+				printf("DEBUG2\n");
+			}
 		}
 	}
 f_return:

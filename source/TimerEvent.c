@@ -61,7 +61,7 @@ struct timespec TimerEvent_check(TimerEvent* event, char* rang)
 		flag_raise(&event->fp, OBJECT_CALLBACK_STATE);
 		if(event->rang_parent_cb)
 			event->rang_parent_cb(event);
-		else
+		else if(event->rang_cb)
 			event->rang_cb(event);
 		flag_lower(&event->fp, OBJECT_CALLBACK_STATE);
 
@@ -157,6 +157,7 @@ void initTimerEvent(TimerEvent* event, size_t sec, size_t nsec, TimerEvent_rang_
 	event->prep_free_cb = NULL;
 	event->fp = FLAG_INIT;
 	event->parent = NULL;
+	event->rang_parent_cb = NULL;
 	event->freeInheritor = NULL;
 
 	/* Initialize dynamic members. */

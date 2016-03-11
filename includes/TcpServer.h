@@ -104,19 +104,35 @@ typedef void (*ts_thread_returning_cb)(TcpServer* server);
 /*******Public Functions*******/
 /* Starts the TcpServer on the current thread.  If the server is already
  * running, it will first be stopped then restarted. To prevent this behavior, first
- * check 'TcpServer_is_running()'. */
+ * check 'TcpServer_is_running()'.
+ *
+ * WILL BLOCK until previous instance of 'server' has finished running. */
 alib_error TcpServer_start(TcpServer* server);
 /* Starts the TcpServer on a separate thread.
  * If the server is already running, ALIB_OK is returned. */
 alib_error TcpServer_start_async(TcpServer* server);
 
-/* Stops the TcpServer. */
+/* Stops the TcpServer.
+ *
+ * WILL BLOCK until the listener thread has been stopped.
+ * Safe to call in callbacks. */
 void TcpServer_stop(TcpServer* server);
+/* Requests that the server loop be stopped and returns immediately.
+ *
+ * Safe to call in callbacks. */
+void TcpServer_stop_async(TcpServer* server);
 
-/* Getters */
+/* Waits for the server thread to return before returning.
+ * If the server was not run using 'TcpServer_start_async()', then the
+ * function returns immediately.
+ *
+ * If called from callback, function returns immediately. */
+void TcpServer_wait_for_thread_return(TcpServer* server);
+
+	/* Getters */
 /* Returns the socket of the server.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 int TcpServer_get_sock(const TcpServer* server);
 /* Returns the sockaddr_in struct of the server.
  *
@@ -127,63 +143,82 @@ int TcpServer_get_sock(const TcpServer* server);
  * Assumes 'server' is not null. */
 const struct sockaddr_in* TcpServer_get_addr(const TcpServer* server);
 /* Returns 0 if the server is not running, otherwise !0.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 char TcpServer_is_running(const TcpServer* server);
 /* Returns the flag pole of the server.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 flag_pole TcpServer_get_flag_pole(const TcpServer* server);
+/* Returns the number of milliseconds 'epoll_wait()' will wait before checking
+ * the status of the server.
+ *
+ * Assumes 'server' is not null. */
+int TcpServer_get_epoll_wait_timeout(const TcpServer* server);
 /* Returns a constant list of clients that are currently connected to the server.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 const ArrayList* TcpServer_get_client_list(const TcpServer* server);
 /* Returns the extended data of the server.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 void* TcpServer_get_extended_data(const TcpServer* server);
-/***********/
+	/***********/
 
-/* Setters */
+	/* Setters */
+/* Sets the timeout for 'epoll_wait()'.  This is the number of milliseconds
+ * the server will wait before checking the server state in the listen thread.
+ *
+ * If started using 'TcpServer_start()' and the server is not stopped except in
+ * the callback functions, then it is safe to set the timeout to '-1'.
+ *
+ * Default value is 1 second.
+ *
+ * Parameters:
+ * 		server: The object to modify.
+ * 		timeout_millis: The number of milliseconds to wait before returning
+ * 			from 'epoll_wait()'.  If -1, the timeout is equal to infinity. */
+void TcpServer_set_epoll_wait_timeout(TcpServer* server, int timeout_millis);
+
 /* Sets the callback for when a client connects to the server.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 void TcpServer_set_client_connected_cb(TcpServer* server,
-	ts_client_connected_cb client_connected);
+		ts_client_connected_cb client_connected);
 /* Sets the callback for when data is ready on a client socket.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 void TcpServer_set_client_data_ready_cb(TcpServer* server,
-	ts_client_data_ready_cb client_data_ready);
+		ts_client_data_ready_cb client_data_ready);
 /* Sets the callback for when data is received from a client.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 void TcpServer_set_client_data_in_cb(TcpServer* server,
-	ts_client_data_in_cb client_data_in);
+		ts_client_data_in_cb client_data_in);
 /* Sets the callback for when a client disconnects from the server.
-*
-* Assumes 'server' is not null. */
+ *
+ * Assumes 'server' is not null. */
 void TcpServer_set_client_disconnected_cb(TcpServer* server,
-	ts_client_disconnected_cb client_disconnected);
+		ts_client_disconnected_cb client_disconnected);
 /* Sets the callback for when the listening thread is about to return.
  *
  * Assumes 'server' is not null. */
 void TcpServer_set_thread_returning_cb(TcpServer* server,
-		ts_thread_returning_cb);
+        ts_thread_returning_cb cb);
 
 /* Sets the the extended data for the server.
-*
-* Assumes 'server' is not null.
-*
-* Parameters:
-* 		server: The server to modify.
-* 		ex_data: The data to set for the server's extended data.
-* 		free_data: The callback function used to free the extended data when
-* 			it is no longer needed.
-* 		free_old_data: If !0, the server will automatically call the free_data_cb
-* 			on the old extended data if possible. */
+ *
+ * Assumes 'server' is not null.
+ *
+ * Parameters:
+ * 		server: The server to modify.
+ * 		ex_data: The data to set for the server's extended data.
+ * 		free_data: The callback function used to free the extended data when
+ * 			it is no longer needed.
+ * 		free_old_data: If !0, the server will automatically call the free_data_cb
+ * 			on the old extended data if possible. */
 void TcpServer_set_extended_data(TcpServer* server, void* ex_data,
-	alib_free_value free_data, char free_old_data);
+		alib_free_value free_data, char free_old_data);
 	/***********/
 /******************************/
 
@@ -192,6 +227,7 @@ void TcpServer_set_extended_data(TcpServer* server, void* ex_data,
  * To start the server, call TcpServer_start() or TcpServer_start_async(). */
 TcpServer* newTcpServer(uint16_t port, void* ex_data,
 		alib_free_value free_data_cb);
+void freeTcpServer(TcpServer* server);
 void delTcpServer(TcpServer** server);
 /**************************/
 

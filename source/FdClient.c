@@ -44,7 +44,7 @@ alib_error FdClient_connect(FdClient* sender)
 	/* Create the socket. */
 	sender->sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(sender->sock < 0)
-		return(ALIB_FD_ERROR);
+		return(ALIB_FD_ERR);
 
 	/* Connect to the host. */
 	if(connect(sender->sock, (struct sockaddr*)&sender->addr, sizeof(sender->addr)))
@@ -55,7 +55,7 @@ f_error:
 	/* Error occurred, need to close the socket. */
 	FdClient_close(sender);
 
-	return(ALIB_FD_ERROR);
+	return(ALIB_FD_ERR);
 }
 
 /* Sends a file descriptor to the host. */
@@ -105,7 +105,7 @@ alib_error FdClient_listen(FdClient* client, fdc_fd_received_cb fd_received)
 
 	/* Setup epoll. */
 	efd = epoll_create(1);
-		if(efd < 0)return(ALIB_FD_ERROR);
+		if(efd < 0)return(ALIB_FD_ERR);
 	event.data.fd = client->sock;
 	event.events = EPOLLIN;
 	if(epoll_ctl(efd, EPOLL_CTL_ADD, client->sock, &event) < 0)

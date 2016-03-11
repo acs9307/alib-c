@@ -1,10 +1,51 @@
-----Version 1.2.2----
+----Version 1.3.0----
 Modified function arguments to be const when possible/logical.
+
+alib_error:
+	Fixed unconventional naming of ALIB_FD_ERROR to be ALIB_FD_ERR.
+	Added ALIB_STATE_ERR. 
+
+alib_proc:
+	NEW!
+
+alib_types:
+	Modified 'is_int()' to be more efficient. 
+
+ArrayList:
+	Added 'ArrayList_extract_array*()' functions.
+	Added 'ArrayList_contains()' function;
+
+DListItem:
+	Modified 'DListItem_get_next_item()' and 'DListItem_get_prev_item()' so that they 
+		check for null 'list' pointers before returning.
+
+EpollPack:
+	Modified so as to make Valgrind happy.  On construction, the epoll struct now has entire 
+		struct cleared before usage.
 
 TcpClient:
 	Modified so that '_connect()' does not attempt to start the reading thread unless there is a 
 		data in callback set.  The return code from '_connect()' will be returned by the function
 		now.
+
+TcpServer:
+	Added 'pthread_mutex_t' and 'pthread_cond_t' members to object.
+	Re-engineered the object to use conditions while waiting and made it safe to stop the object
+		from within the callback functions.  Though 'safe' to free/delete the object from within
+		the callback functions, be sure you don't delete the object from another thread, usually
+		it should be deleted by the thread creating the object. 
+	Added modification of the 'epoll_wait()' timeout value.  Default value is 1 second. 
+	
+ThreadedTimerEvent:
+	Fixed bug where 'timer_loop' does not sleep.  Was using CLOCK_MONOTONIC time with
+		'pthread_cond_timedwait()' when I needed to use CLOCK_REALTIME time. 
+
+TimerEvent:
+	Fixed bug where 'rang_parent_cb' was not set to NULL on construction.
+
+TimerEventHandler:
+	Fixed bug where 'timer_loop' does not sleep.  Was using CLOCK_MONOTONIC time with
+		'pthread_cond_timedwait()' when I needed to use CLOCK_REALTIME time. 
 
 ----Version 1.2.1----
 alib_time:

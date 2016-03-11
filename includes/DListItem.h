@@ -207,13 +207,9 @@ DListItem* DListItem_get_first_item(const DListItem* list);
 /* Returns the last item in the list. */
 DListItem* DListItem_get_last_item(const DListItem* list);
 
-/* Returns the next item in the list.
- *
- * Assumes 'list' is not null. */
+/* Returns the next item in the list. */
 DListItem* DListItem_get_next_item(const DListItem* list);
-/* Returns the previous item in the list.
- *
- * Assumes 'list' is not null. */
+/* Returns the previous item in the list. */
 DListItem* DListItem_get_prev_item(const DListItem* list);
 
 /* Returns the list item's value.

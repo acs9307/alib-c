@@ -26,7 +26,7 @@ typedef struct TcpClient TcpClient;
 
 /*******Callback Types*******/
 /* Called whenever a client receives data from the host. */
-typedef server_cb_rval(*tc_data_in)(TcpClient* client, const char* data, size_t data_len);
+typedef server_cb_rval(*tc_data_in)(TcpClient* client, const void* data, size_t data_len);
 /* Called after a client's connection to the host has been lost. */
 typedef server_cb_rval(*tc_disconnect)(TcpClient* client);
 /* Called whenever a client is preparing to connect to a host, after a socket
@@ -60,7 +60,8 @@ void TcpClient_disconnect(TcpClient* client);
  * Parameters:
  * 		client: The client who will be sending the data.
  * 		data: The data to be sent.
- * 		data_len: The length of the data to be sent.
+ * 		data_len: The length of the data to be sent.  If 0,
+ * 			length will be calculated with 'strlen(data)'.
  *
  * Returns:
  * 		An alib_error that describes the error. */
@@ -143,11 +144,6 @@ void TcpClient_set_ex_data(TcpClient* client, void* ex_data,
 /******************************/
 
 /*******Constructors*******/
-	/* Private Constructors */
-/* Base for construction of the object. Used by all other constructors. */
-static TcpClient* newTcpClient_base(void* ex_data, alib_free_value free_data_cb);
-	/************************/
-
 /* Creates a disconnected new TcpClient.
  *
  * Parameters:

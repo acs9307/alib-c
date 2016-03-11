@@ -1,10 +1,20 @@
 #ifndef ALIB_ERROR_IS_INCLUDED
 #define ALIB_ERROR_IS_INCLUDED
 
+#ifndef ALIB_FD_ERROR
+/* Old name for 'ALIB_FD_ERR', for compatibility purposes only.
+ * Use 'ALIB_FD_ERR' instead if possible. */
+#define ALIB_FD_ERROR ALIB_FD_ERR
+#endif
+
 typedef enum alib_error
 {
+	/* Generic bad state error. */
+	ALIB_STATE_ERR = -23,
 	ALIB_OVERFLOW = -22,
 	ALIB_FILE_NOT_FOUND = -21,
+	/* Error occurred during a recv() operation. */
+	ALIB_TCP_RECV_ERR = -20,
 	ALIB_FILE_FORMAT_ERR = -19,
 	/* Operation timed out. */
 	ALIB_TIMEOUT = -18,
@@ -31,14 +41,12 @@ typedef enum alib_error
 	 * still be corrupted as the object may have been able
 	 * to fix itself. */
 	ALIB_OBJ_CORRUPTION = -9,
-	/* Error occurred during a recv() operation. */
-	ALIB_TCP_RECV_ERR = -20,
 	/* Unable to send over TCP. */
 	ALIB_TCP_SEND_ERR = -8,
 	/* Unable to connect via TCP. */
 	ALIB_TCP_CONNECT_ERR = -7,
 	/* Error occurred on a file descriptor. */
-	ALIB_FD_ERROR = -6,
+	ALIB_FD_ERR = -6,
 	/* Unknown error. */
 	ALIB_UNKNOWN_ERR = -5,
 	/* Failed to bind to the port as it is

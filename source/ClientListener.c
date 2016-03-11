@@ -50,7 +50,7 @@ static alib_error init_epoll(struct epoll_pack* pack)
 	/* Make the epoll fd. */
 	pack->efd = epoll_create(DEFAULT_BACKLOG_SIZE);
 	if(pack->efd < 0)
-		return(ALIB_FD_ERROR);
+		return(ALIB_FD_ERR);
 
 	/* Setup triggered event list. */
 	memset(pack->triggered_events, 0, sizeof(pack->triggered_events));

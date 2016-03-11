@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "alib_types.h"
 #include "alib_error.h"
@@ -67,7 +68,7 @@ void ArrayList_remove(ArrayList* list, void* item);
  * 		void*: Pointer to the first item found.
  * 		NULL: No item found or an error occurred.
  */
-void* ArrayList_get_first_item(ArrayList* list);
+void* ArrayList_get_first_item(const ArrayList* list);
 /* Finds the item pointer by the given value.
  *
  * Parameters:
@@ -79,7 +80,9 @@ void* ArrayList_get_first_item(ArrayList* list);
  * 		NULL: Error occurred or no matching value found.
  * 		void*: The pointer to the value that matches the given 'val' according to the 'compare_cb'.
  */
-const void* ArrayList_find_item_by_value(ArrayList* list, void* val, alib_compare_values compare_cb);
+const void* ArrayList_find_item_by_value(const ArrayList* list, const void* val, alib_compare_values compare_cb);
+/* Returns true if 'data' matches an item in 'list' */
+char ArrayList_contains(const ArrayList* list, const void* data, size_t data_len);
 
 /* Removes all the items from the list without actually deleting the list.
  *
@@ -144,25 +147,31 @@ alib_error ArrayList_sift(ArrayList* list);
  */
 alib_error ArrayList_sort(ArrayList* list, alib_compare_objects compare_cb);
 
+/* Extracts the internal array and returns it.
+ * After extraction, the list neither owns nor knows of the
+ * array, therefore the user MUST FREE THE MEMORY pointed to by
+ * the return value. */
+void** ArrayList_extract_array(ArrayList* list);
+
 	/* Getters */
 /* Returns the number of items are in the array.
  *
  * Assumes 'list' is not null. */
-size_t ArrayList_get_count(ArrayList* list);
+size_t ArrayList_get_count(const ArrayList* list);
 /* Returns the current capacity of the list.
  *
  * Assumes 'list' is not null. */
-size_t ArrayList_get_capacity(ArrayList* list);
+size_t ArrayList_get_capacity(const ArrayList* list);
 /* Returns the maximum capacity of the list.
  *
  * Assumes 'list' is not null. */
-size_t ArrayList_get_max_capacity(ArrayList* list);
+size_t ArrayList_get_max_capacity(const ArrayList* list);
 
 /* Returns a pointer to the internal array.  The returned list
  * should only be read and never modified.
  *
  * Assumes 'list' is not null. */
-const void** ArrayList_get_array_ptr(ArrayList* list);
+const void** ArrayList_get_array_ptr(const ArrayList* list);
 /* Gets the item by the index.  The index is the virtual index of actual items
  * within the array instead of the actual array index.  To use the real index,
  * use the array pointer returned from 'ArrayList_get_array_ptr()'.
@@ -179,7 +188,7 @@ const void** ArrayList_get_array_ptr(ArrayList* list);
  * 		It is not suggested to use this unless the object has first
  * 		been sorted as values aren't guaranteed nor are they static.
  */
-const void* ArrayList_get_by_index(ArrayList* list, size_t v_index);
+const void* ArrayList_get_by_index(const ArrayList* list, size_t v_index);
 /* Finds the list index of the item if it exists.  If it does not exist
  * in the list, then -1 is returned.
  *
@@ -193,7 +202,7 @@ const void* ArrayList_get_by_index(ArrayList* list, size_t v_index);
  * 		-1: Item not found.
  * 		ALIB_BAD_ARG: As of this writing it is also -1, but is called
  * 			if a bad argument was passed. */
-long ArrayList_get_item_index(ArrayList* list, const void* item);
+long ArrayList_get_item_index(const ArrayList* list, const void* item);
 	/***********/
 
 	/* Setters */
@@ -225,8 +234,6 @@ char ArrayList_add_tsafe(ArrayList* list, void* item);
 void ArrayList_remove_tsafe(ArrayList* list, void* item);
 /* Same as ArrayList_remove_no_free() but with mutexing. */
 void ArrayList_remove_no_free_tsafe(ArrayList* list, void* item);
-/* Same as ArrayList_get_first_item() but with mutexing. */
-void* ArrayList_get_first_item_tsafe(ArrayList* list);
 /* Same as ArrayList_find_item_by_value() but with mutexing. */
 const void* ArrayList_find_item_by_value_tsafe(ArrayList* list, void* val, alib_compare_values compare_cb);
 
@@ -243,7 +250,12 @@ alib_error ArrayList_sift_tsafe(ArrayList* list);
 /* Same as ArrayList_sort() but with mutexing. */
 alib_error ArrayList_sort_tsafe(ArrayList* list, alib_compare_objects compare_cb);
 
+/* Same as ArrayList_extract_array() but with mutexing. */
+void** ArrayList_extract_array_tsafe(ArrayList* list);
+
 		/* Getters */
+/* Same as ArrayList_get_first_item() but with mutexing. */
+void* ArrayList_get_first_item_tsafe(ArrayList* list);
 /* Same as ArrayList_get_by_index() but with mutexing. */
 const void* ArrayList_get_by_index_tsafe(ArrayList* list, size_t index);
 /* Same as ArrayList_get_item_index() but with mutexing. */

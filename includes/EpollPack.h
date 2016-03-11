@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "alib_types.h"
 #include "alib_error.h"

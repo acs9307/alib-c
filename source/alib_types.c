@@ -87,26 +87,20 @@ char is_whitespace(char c)
  */
 char is_int(const char* str)
 {
-	char r_val = 0;
-
 	//Skip front end whitespaces
 	while(is_whitespace(*str))
 		++str;
 
-	//Continue till end of string or a whitespace is hit
-	while(*str != '\0' && !is_whitespace(*str))
+	do
 	{
 		//Non-integer value, return false.
 		if(*str < '0' || *str > '9')
 			return(0);
 		else
-		{
-			r_val = 1;
 			++str;
-		}
-	}
+	}while(*str != '\0' && !is_whitespace(*str));
 
-	return(r_val);
+	return(1);
 }
 /* Returns true if the string is a valid integer.
  *

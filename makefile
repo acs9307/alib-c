@@ -4,6 +4,7 @@ alibc:
 	gcc -c alib_cb_funcs.c
 	gcc -c alib_dir.c
 	gcc -c alib_file.c
+	gcc -c alib_proc.c
 	gcc -c alib_sockets.c
 	gcc -c alib_string.c
 	gcc -c alib_time.c
