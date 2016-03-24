@@ -10,7 +10,16 @@
 
 #define ZIP_CHUNK 64*1024
 
-/*******Public Functions*******/
+/*******Stream Initializers*******/
+/* Initializes a 'z_stream' for deflation. */
+int init_deflate_stream(z_stream* strm, int level);
+/* Initializer for a gzip deflation. */
+int init_gzip_deflate(z_stream* strm, int level);
+
+/* Initializes a 'z_stream' for inflation. */
+int init_inflate_stream(z_stream* strm);
+/*********************************/
+
 /* Deflates an array of data, and places deflated data into a buffer.
  * This is the fastest deflate function as all data is stored in RAM.
  * This is suitable for small files.  For large files, it is suggested to use
@@ -129,6 +138,5 @@ int inflate_btf(const unsigned char* buff, size_t buff_len, FILE* dest);
  *
  * Returns Z_LIB error code. Returns Z_OK on success. */
 int inflate_ftf(FILE* src, FILE* dest);
-/******************************/
 
 #endif

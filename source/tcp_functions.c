@@ -7,17 +7,18 @@
  * This function WILL block until a connection is made or a connection fails.
  *
  * Parameters:
- * 		host_ip_addr: The IP address of the host.
+ * 		host_address: The address of the host, either IP or DNS.
  * 		port: The port of the host application.
  * 		data: The data to be sent to the host.  If 0, strlen() will be called on 'data'.
  * 		data_len: The length of the 'data' to be sent to the host.
  */
-alib_error tcp_send_data_by_host(const char* host_ip_addr, uint16_t port,
+alib_error tcp_send_data_by_host(const char* host_address, uint16_t port,
 		const char* data, size_t data_len)
 {
 	int sock = -1, err = 0;
 	struct sockaddr_in host_addr;
 	size_t send_count;
+	struct hostent* host;
 
 	/* Allocate the socket. */
 	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -26,9 +27,13 @@ alib_error tcp_send_data_by_host(const char* host_ip_addr, uint16_t port,
 
 	/* Initialize the host address struct. */
 	memset(&host_addr, 0, sizeof(host_addr));
-	host_addr.sin_family = AF_INET;
-	host_addr.sin_port = htons(port);
-	host_addr.sin_addr.s_addr = inet_addr(host_ip_addr);
+	host = gethostbyname(host_address);
+	if(host)
+	{
+		host_addr.sin_family = AF_INET;
+		host_addr.sin_port = htons(port);
+		host_addr.sin_addr =  *((struct in_addr*)*host->h_addr_list);
+	}
 
 	/* Connect. */
 	err = connect(sock, (struct sockaddr*)&host_addr, sizeof(host_addr));

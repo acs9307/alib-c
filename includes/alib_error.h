@@ -9,7 +9,6 @@
 
 typedef enum alib_error
 {
-	ALIB_DEVICE_NOT_FOUND = -24,
 	/* Generic bad state error. */
 	ALIB_STATE_ERR = -23,
 	ALIB_OVERFLOW = -22,

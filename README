@@ -12,7 +12,7 @@ Conventions:
 	Most objects are dynamically allocated and must be manually freed when no longer needed.
 	This was by design as copying large objects is very inefficient.  It is also best practice
 	as most objects have dynamically allocated members, meaning you must uninitialize them anyways.
-	This creates consistency and decreases the number of times memory must be copied.
+	This creates consistency and efficiency.
 	
 	Nameing:
 		Class declarations/definitions will ALWAYS have a capital letter for the first letter 
@@ -52,5 +52,5 @@ Notes:
 	'UvTcpServer' were born.  NEVER use these unless absolutely necessary.  I thought about 
 	deleting them, however they will remain for a short time incase I need them again.  Do
 	not expect them to stay in later versions of the library as they are all very buggy mainly
-	due to the retarded 'assert()' design by libuv's creators...nothing like having a library
+	due to the idiotic 'assert()' design by libuv's creators...nothing like having a library
 	that crashes your application with no dicernable information as to why it crashed...

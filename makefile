@@ -43,6 +43,7 @@ alibc:
 #	gcc -c UvTcpClient.c
 #	gcc -c UvTcpServer.c
 	gcc -c zip.c
+	gcc -c ZipFileIter.c
 	gcc -c ancillary/fd_recv.c
 	gcc -c ancillary/fd_send.c
 	ar -rc libalibc.a *.o	

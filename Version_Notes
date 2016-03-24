@@ -1,6 +1,37 @@
 ----Version 1.3.1----
+Though ZipIter classes have been added in this version, it is suggested to wait until they have
+been completed as they were written in a hurry to serve an immediate need. 
+
 alib_error:
 	Added ALIB_DEVICE_NOT_FOUND
+
+proc_waiter:
+	Fixed potential infinate loop where if no child process existed, the waiting function 
+		would wait until the thread was to be stopped.
+	Added functionality so that sleeping is an option when no child process exists.  If 
+		sleeping is not desired, the thread will wait on the waiter's condition. 
+	Added 'proc_waiter_wakeup()' so that if the waiter is waiting for a child process, the user
+		can wake it up without having to add a callback handler.
+
+FdServer:
+	Added checks to calls to 'close()' so that we don't close any bad file descriptors.
+		This was mainly done to make Valgrind happy.
+
+tcp_functions:
+    Modified 'tcp_send_data_by_host()' to handle DNS addresses of hosts. 
+
+zip:
+	Added initializer for 'gzip' streams.
+    Fixed bug with all 'tb (to buffer)' functions, now files larger than 64k don't have issues.
+
+ZipIter:
+	NEW!
+	Currently a virtual class.
+	BEWARE - Still being worked on.
+
+ZipFileIter:
+	NEW!
+	BEWARE - Still being worked on.
 
 ----Version 1.3.0----
 Modified function arguments to be const when possible/logical.

@@ -165,7 +165,8 @@ static alib_error run_loop(FdServer* server)
 				new_client = new_fds_package(new_sock);
 				if(!new_client)
 				{
-					close(new_sock);
+					if(new_sock > -1)
+						close(new_sock);
 					rval = ALIB_MEM_ERR;
 					goto f_return;
 				}
@@ -218,7 +219,8 @@ static alib_error run_loop(FdServer* server)
 						(server->clients, &server->ep.events->data.fd, compare_int_ptr);
 				if(!package)
 				{
-					close(server->ep.events->data.fd);
+					if(server->ep.events->data.fd > -1)
+						close(server->ep.events->data.fd);
 					continue;
 				}
 
@@ -308,7 +310,8 @@ void FdServer_close_client_by_socket(FdServer* server, int sock)
 	package = (fds_package*)ArrayList_find_item_by_value_tsafe(server->clients, &sock, compare_int_ptr);
 	if(package == NULL)
 	{
-		close(sock);
+		if(sock > -1)
+			close(sock);
 		return;
 	}
 	else
@@ -332,8 +335,10 @@ alib_error FdServer_bind(FdServer* server)
 	if(!server)return(ALIB_BAD_ARG);
 
 	/* Ensure the socket is closed. */
-	close(server->sock);
-	close(server->ep.efd);
+	if(server->sock > -1)
+		close(server->sock);
+	if(server->sock > -1)
+		close(server->ep.efd);
 	server->sock = -1;
 	server->ep.efd = -1;
 

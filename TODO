@@ -1,5 +1,7 @@
+Fix race condition with 'free_proc_waiter()'.  Sticks on some platforms.  Looks like 'wait' returns before a condition is raised?
+
+Finish ZipIter classes.
 Add gzip formatting for 'zip'.
-Add 'zip_iter'.
 
 Add 'free_array()' to alib, should work similar to del[].
 

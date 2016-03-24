@@ -32,6 +32,11 @@ void proc_waiter_stop_now();
  * Waiting for child processes to close is handled on a separate thread. */
 alib_error proc_waiter_start();
 
+/* Broadcasts on the waiter's condition and wakes up any related waiting threads.
+ *
+ * Use after you have forked a new process. */
+void proc_waiter_wakeup();
+
 /* Registers a callback with the process waiter, but will not start the process waiter
  * if it is not running.  Note that this will not stop the process waiter if it is already
  * running.
@@ -94,7 +99,7 @@ void free_proc_waiter();
 char proc_waiter_is_running();
 /* Returns the number of microseconds the process waiter will sleep when
  * no child processes are connected to the current process. */
-size_t proc_waiter_get_sleep_time();
+int64_t proc_waiter_get_sleep_time();
 /*********************/
 
 /*******Setters*******/
@@ -103,7 +108,7 @@ size_t proc_waiter_get_sleep_time();
  *
  * If the thread is already sleeping, it will finish sleeping for the original
  * duration.  On the next iteration, then the new sleep time will be used. */
-void proc_waiter_set_sleep_time(size_t sleep_time);
+void proc_waiter_set_sleep_time(int64_t sleep_time);
 /*********************/
 
 #endif

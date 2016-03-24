@@ -11,7 +11,7 @@ pthread_mutex_t* PROC_WAITER_MUTEX = NULL;
 flag_pole PROC_WAITER_FLAG_POLE = 0;
 
 ArrayList* PROC_WAITER_CB_LIST = NULL;
-size_t PROC_WAITER_SLEEP_TIME = 1000 * 1000;  //In microseconds
+int64_t PROC_WAITER_SLEEP_TIME = -1;  //In microseconds, default is to not sleep but wait to be woken up.
 /*****************************/
 
 /*******Private Structs*******/
@@ -40,15 +40,24 @@ static void* thread_proc(void* unused)
 		/* There are no child processes connected to the current process. */
 		if(pid < 0)
 		{
+			char shouldSleep = 0;
+
+			pthread_mutex_lock(PROC_WAITER_MUTEX);
 			if(!ArrayList_get_count(PROC_WAITER_CB_LIST))
 			{
-				pthread_mutex_lock(PROC_WAITER_MUTEX);
-				while(pid < 0 && !(PROC_WAITER_FLAG_POLE & THREAD_STOP))
+				while(!ArrayList_get_count(PROC_WAITER_CB_LIST) &&
+						!(PROC_WAITER_FLAG_POLE & THREAD_STOP))
+				{
 					pthread_cond_wait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX);
-				pthread_mutex_unlock(PROC_WAITER_MUTEX);
+				}
 			}
-			else
+			else if(PROC_WAITER_SLEEP_TIME < 0)
+				pthread_cond_wait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX);
+
+			pthread_mutex_unlock(PROC_WAITER_MUTEX);
+			if(shouldSleep)
 				usleep(PROC_WAITER_SLEEP_TIME);
+
 			continue;
 		}
 
@@ -146,7 +155,12 @@ void proc_waiter_stop_wait()
 
 	pthread_mutex_lock(PROC_WAITER_MUTEX);
 	while(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
-		pthread_cond_wait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX);
+	{
+		struct timespec timeout;
+		clock_gettime(CLOCK_REALTIME, &timeout);
+		timeout.tv_sec += 1;
+		pthread_cond_timedwait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX, &timeout);
+	}
 	pthread_mutex_unlock(PROC_WAITER_MUTEX);
 }
 /* Forces the process waiter to stop immediately.
@@ -213,6 +227,15 @@ f_unlock:
 	pthread_mutex_unlock(PROC_WAITER_MUTEX);
 
 	return(err);
+}
+
+/* Broadcasts on the waiter's condition and wakes up any related waiting threads.
+ *
+ * Use after you have forked a new process. */
+void proc_waiter_wakeup()
+{
+	if(PROC_WAITER_T_COND)
+		pthread_cond_broadcast(PROC_WAITER_T_COND);
 }
 
 /* Registers a callback with the process waiter, but will not start the process waiter
@@ -366,7 +389,7 @@ void free_proc_waiter()
 char proc_waiter_is_running(){return(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING);}
 /* Returns the number of microseconds the process waiter will sleep when
  * no child processes are connected to the current process. */
-size_t proc_waiter_get_sleep_time(){return(PROC_WAITER_SLEEP_TIME);}
+int64_t proc_waiter_get_sleep_time(){return(PROC_WAITER_SLEEP_TIME);}
 /*********************/
 
 /*******Setters*******/
@@ -375,5 +398,5 @@ size_t proc_waiter_get_sleep_time(){return(PROC_WAITER_SLEEP_TIME);}
  *
  * If the thread is already sleeping, it will finish sleeping for the original
  * duration.  On the next iteration, then the new sleep time will be used. */
-void proc_waiter_set_sleep_time(size_t sleep_time){PROC_WAITER_SLEEP_TIME = sleep_time;}
+void proc_waiter_set_sleep_time(int64_t sleep_time){PROC_WAITER_SLEEP_TIME = sleep_time;}
 /*********************/

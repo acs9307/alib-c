@@ -2,18 +2,36 @@
 
 #include "BinaryBuffer_private.h"
 
-/*******Private Functions*******/
 /* Initializes a 'z_stream' for deflation. */
-static int init_deflate_stream(z_stream* strm, int level)
+int init_deflate_stream(z_stream* strm, int level)
 {
+	if(!strm)return(ALIB_BAD_ARG);
+
 	strm->zalloc = Z_NULL;
 	strm->zfree = Z_NULL;
 	strm->opaque = Z_NULL;
 	return(deflateInit(strm, level));
 }
-/* Initializes a 'z_stream' for inflation. */
-static int init_inflate_stream(z_stream* strm)
+/* Initializer for a gzip deflation. */
+int init_gzip_deflate(z_stream* strm, int level)
 {
+	if(!strm)return(ALIB_BAD_ARG);
+
+	strm->zalloc = Z_NULL;
+	strm->zfree = Z_NULL;
+	strm->opaque = Z_NULL;
+	strm->avail_out = strm->avail_in = 0;
+	strm->next_out = strm->next_in = NULL;
+
+	return(deflateInit2(strm, level, Z_DEFLATED,
+			MAX_WBITS+16, 8, Z_DEFAULT_STRATEGY));
+}
+
+/* Initializes a 'z_stream' for inflation. */
+int init_inflate_stream(z_stream* strm)
+{
+	if(!strm)return(ALIB_BAD_ARG);
+
 	strm->zalloc = Z_NULL;
 	strm->zfree = Z_NULL;
 	strm->opaque = Z_NULL;
@@ -21,9 +39,7 @@ static int init_inflate_stream(z_stream* strm)
 	strm->next_in = Z_NULL;
 	return(inflateInit(strm));
 }
-/*******************************/
 
-/*******Public Functions*******/
 /* Deflates an array of data, and places deflated data into a buffer.
  * This is the fastest deflate function as all data is stored in RAM.
  * This is suitable for small files.  For large files, it is suggested to use
@@ -73,6 +89,8 @@ int deflate_btb(const unsigned char* buff, size_t buff_len, unsigned char** out_
 		rval = deflate(&strm, Z_FINISH);
 		if(rval == Z_STREAM_ERROR)
 			goto f_return;
+
+		out->len += ZIP_CHUNK - strm.avail_out;
 	}while(strm.avail_out == 0);
 
 	/* If we reached the end of the stream, then all is good,
@@ -81,7 +99,6 @@ int deflate_btb(const unsigned char* buff, size_t buff_len, unsigned char** out_
 		rval = Z_OK;
 
 	/* Set the output parameters as needed. */
-	out->len += ZIP_CHUNK - strm.avail_out;
 	BinaryBuffer_shrink_to_fit(out);
 	*out_buff_len = out->len;
 	*out_buff = BinaryBuffer_extract_buffer(out);
@@ -358,6 +375,8 @@ int inflate_btb(const unsigned char* buff, size_t buff_len, unsigned char** out_
 		case Z_MEM_ERROR:
 			goto f_return;
 		}
+
+		out->len += ZIP_CHUNK - strm.avail_out;
 	}while(strm.avail_out == 0);
 
 	/* Hitting the end of stream is desired behavior. */
@@ -365,7 +384,6 @@ int inflate_btb(const unsigned char* buff, size_t buff_len, unsigned char** out_
 		rval = Z_OK;
 
 	/* Set output pointers. */
-	out->len += ZIP_CHUNK - strm.avail_out;
 	BinaryBuffer_shrink_to_fit(out);
 	*out_buff_len = out->len;
 	*out_buff = BinaryBuffer_extract_buffer(out);
@@ -445,6 +463,8 @@ int inflate_ftb(FILE* source, unsigned char** out_buff, size_t* out_buff_len)
 			case Z_MEM_ERROR:
 				goto f_return;
 			}
+
+			out->len += ZIP_CHUNK - strm.avail_out;
 		}while(strm.avail_out == 0);
 	}while(rval != Z_STREAM_END);
 
@@ -453,7 +473,6 @@ int inflate_ftb(FILE* source, unsigned char** out_buff, size_t* out_buff_len)
 		rval = Z_OK;
 
 	/* Set output parameter pointers. */
-	out->len += ZIP_CHUNK - strm.avail_out;
 	BinaryBuffer_shrink_to_fit(out);
 	*out_buff_len = out->len;
 	*out_buff = BinaryBuffer_extract_buffer(out);
@@ -608,4 +627,3 @@ f_return:
 	inflateEnd(&strm);
 	return(rval);
 }
-/******************************/
