@@ -6,6 +6,8 @@
 #define TIMER_EVENT_MEMBERS 													\
 	/* Timer for the event. */ 													\
 	Timer* timer; 																\
+	/* 0 if 'timer' was created internally, !0 if it was created externally. */	\
+	char refTimer;																\
 																				\
 	/* Extended user data. */ 													\
 	void* exData; 																\
@@ -52,6 +54,11 @@ void* TimerEvent_get_parent(TimerEvent* event);
 void TimerEvent_set_rang_parent_cb(TimerEvent* event,
 		void* parent, TimerEvent_rang_cb rang_parent_cb);
 	/***********/
+
+	/* Constructors */
+void initTimerEvent(TimerEvent** event, Timer* timer, char refTimer, TimerEvent_rang_cb rang_cb,
+		void* exData, alib_free_value freeExData);
+	/****************/
 /*********************************/
 
 #endif

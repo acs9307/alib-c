@@ -345,7 +345,7 @@ char* find_last_char_count(const char* str, char c, size_t count)
 
     /* Set the pointer to the end of the string,
      * we will iterate backwards. */
-    r_ptr = (char*)(str + count);
+    r_ptr = (char*)(str + count - 1);
 
     /* Iterate backwards through the string. */
     for(; *r_ptr != c && r_ptr != str - 1; --r_ptr);

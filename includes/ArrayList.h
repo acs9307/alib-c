@@ -114,6 +114,10 @@ size_t ArrayList_resize(ArrayList* list, size_t newcap);
  * 		The new capacity.
  */
 size_t ArrayList_shrink(ArrayList* list);
+/* Doubles the allocated memory of the list, if possible.
+ *
+ * Returns the capacity of the ArrayList. */
+size_t ArrayList_expand(ArrayList* list);
 
 /* Sifts all the filled pointers to the first part of the array.
  * If the array was ordered before but had NULL pointers between

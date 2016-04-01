@@ -5,9 +5,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#if 0
 #include "alib_error.h"
 #include "ArrayList.h"
 #include "flags.h"
+#else
+#include <alib-c/alib_error.h>
+#include <alib-c/ArrayList.h>
+#include <alib-c/flags.h>
+#endif
 
 typedef void (*proc_exited_cb)(int pid, int status, void* user_data);
 
@@ -93,6 +99,25 @@ void proc_waiter_deregister_all();
  * If there are other threads that make calls on the process waiter
  * while 'free_proc_waiter()' is executing, behavior is undefined. */
 void free_proc_waiter();
+
+/*******Thread Safe Functions*******/
+/* Thread safe version of 'proc_waiter_register_no_start()'.
+ *
+ * Locks the ArrayList mutex. */
+alib_error proc_waiter_register_no_start_tsafe(int pid, proc_exited_cb proc_exited, void* user_data);
+/* Thread safe version of 'proc_waiter_register()'.
+ *
+ * Locks the ArrayList mutex. */
+alib_error proc_waiter_register_tsafe(int pid, proc_exited_cb proc_exited, void* user_data);
+/* Thread safe version of 'proc_waiter_deregister()'.
+ *
+ * Locks the ArrayList mutex. */
+void proc_waiter_deregister_tsafe(int pid, proc_exited_cb proc_exited, void* user_data);
+/* Thread safe version of 'proc_waiter_deregister_all()'.
+ *
+ * Locks the ArrayList mutex. */
+void proc_waiter_deregister_all_tsafe();
+/***********************************/
 
 /*******Getters*******/
 /* Returns !0 if the waiter thread is running.  0 otherwise. */

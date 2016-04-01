@@ -83,6 +83,24 @@ void TimerEvent_begin(TimerEvent* event)
 		Timer_begin(event->timer);
 }
 
+/* Compares two TimerEvent objects.
+ *
+ * Returns:
+ * 		<0: te1's end time is before te2's end time.
+ * 		 0: te1's end time is the same as te2's end time.
+ * 		>0: te1's end time is after te2's end time. */
+int TimerEvent_compare_least_remaining_time(const TimerEvent* te1, const TimerEvent* te2)
+{
+	if(!te1 && te2)
+		return(-1);
+	else if(te1 && !te2)
+		return(1);
+	else if(!te1 && !te2)
+		return(0);
+
+	return(timespec_cmp_fast(Timer_get_end_time(te1->timer), Timer_get_end_time(te2->timer)));
+}
+
 	/* Getters */
 /* Returns the Timer object of the TimerEvent.
  *
@@ -145,27 +163,33 @@ void TimerEvent_set_prep_free_cb(TimerEvent* event,
 
 /*******Constructors*******/
 /* Initializes a TimerEvent. */
-void initTimerEvent(TimerEvent* event, size_t sec, size_t nsec, TimerEvent_rang_cb rang_cb,
+void initTimerEvent(TimerEvent** event, Timer* timer, char refTimer, TimerEvent_rang_cb rang_cb,
 		void* exData, alib_free_value freeExData)
 {
-	if(!event)return;
+	if(!event)
+	{
+		if(timer && !refTimer)
+			delTimer(&timer);
+		return;
+	}
 
 	/* Initialize non-dyanmic members. */
-	event->exData = exData;
-	event->freeExData = freeExData;
-	event->rang_cb = rang_cb;
-	event->prep_free_cb = NULL;
-	event->fp = FLAG_INIT;
-	event->parent = NULL;
-	event->rang_parent_cb = NULL;
-	event->freeInheritor = NULL;
+	(*event)->exData = exData;
+	(*event)->freeExData = freeExData;
+	(*event)->rang_cb = rang_cb;
+	(*event)->prep_free_cb = NULL;
+	(*event)->fp = FLAG_INIT;
+	(*event)->parent = NULL;
+	(*event)->rang_parent_cb = NULL;
+	(*event)->freeInheritor = NULL;
+	(*event)->timer = timer;
+	(*event)->refTimer = refTimer;
 
 	/* Initialize dynamic members. */
-	event->timer = newTimer(sec, nsec);
-	if(!event->timer)
-		delTimerEvent(&event);
-
+	if(!(*event)->timer)
+		delTimerEvent(event);
 }
+
 /* Creates a new TimerEvent object.
  * If creation fails, 'exData' will not be freed, even if
  * 'freeExData' is provided.
@@ -177,7 +201,26 @@ TimerEvent* newTimerEvent(size_t sec, size_t nsec, TimerEvent_rang_cb rang_cb,
 		void* exData, alib_free_value freeExData)
 {
 	TimerEvent* event = (TimerEvent*)malloc(sizeof(TimerEvent));
-	initTimerEvent(event, sec, nsec, rang_cb, exData, freeExData);
+	initTimerEvent(&event, newTimer(sec, nsec), 0, rang_cb, exData, freeExData);
+	return(event);
+}
+/* Creates a new TimerEvnet object.
+ * 'timer' is created externally and 'refTimer' should define whether or not the
+ * memory of 'timer' is being handled externally or internally of the TimerEvent object.
+ *
+ * If 'refTimer' is false, 'timer' will be freed upon object deletion.  If it is true,
+ * 'timer' will not be freed internally and must be freed by an external object.  If
+ * 'timer' is referenced from an external source, 'timer's lifetime must outlast that
+ * of the new TimerEvent object or behavior is undefined.
+ *
+ * Returns:
+ * 		TimerEvent*: Success
+ * 		NULL: Failure */
+TimerEvent* newTimerEvent_ex(Timer* timer, char refTimer, TimerEvent_rang_cb rang_cb,
+		void* exData, alib_free_value freeExData)
+{
+	TimerEvent* event = (TimerEvent*)malloc(sizeof(TimerEvent));
+	initTimerEvent(&event, timer, refTimer, rang_cb, exData, freeExData);
 	return(event);
 }
 /**************************/
@@ -201,7 +244,8 @@ void freeTimerEvent(TimerEvent* event)
 			event->freeInheritor(event);
 		flag_lower(&event->fp, OBJECT_CALLBACK_STATE);
 
-		freeTimer(event->timer);
+		if(!event->refTimer)
+			freeTimer(event->timer);
 		if(event->exData && event->freeExData)
 			event->freeExData(event->exData);
 		free(event);

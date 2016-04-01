@@ -15,6 +15,10 @@ char ListItem_is_removed(ListItem* item);
 
 /* Marks the item for removal. */
 void ListItem_mark_for_removal(ListItem* item);
+/* Extracts the ListItemValue from the item and marks
+ * the item for deletion without deleting the ListItem.
+ * ListItem's reference counter will not be decremented. */
+ListItemVal* ListItem_extract_value(ListItem* item);
 
 /*******Lifecycle*******/
 #ifndef initListItem

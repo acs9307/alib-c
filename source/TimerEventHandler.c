@@ -1,4 +1,5 @@
 #include "TimerEventHandler_private.h"
+#include "ListItemVal_private.h"
 
 /*******Private Functions*******/
 /* Adds an event to the event list.  This is done without locking the mutex
@@ -82,6 +83,54 @@ static void remove_event(TimerEventHandler* handler, TimerEvent* event)
 	 	DListItem_get_by_value((DListItem*)DList_get(handler->list, 0), event));
 	pthread_cond_broadcast(&handler->cond);
 }
+/* Pulls an event from the handler. */
+static void extract_event(TimerEventHandler* handler, TimerEvent* event)
+{
+	DListItem* itm = DList_pull_out(handler->list,
+			DListItem_index(DList_get_by_value(handler->list, event)));
+	ListItemVal* val = ListItem_extract_value((ListItem*)itm);
+	val->value = NULL;
+	delDListItem(&itm);
+
+	pthread_cond_broadcast(&handler->cond);
+}
+static void sort_events(TimerEventHandler* handler)
+{
+	if(!handler)return;
+
+	const DListItem* listIt = DList_get_begin(handler->list);
+	TimerEvent** arrayIt, **arrayEnd;
+	size_t arrayLen = DList_get_count(handler->list);
+	TimerEvent** eventArray = (TimerEvent**)malloc(sizeof(TimerEvent*) * arrayLen);
+	if(!eventArray)return;
+
+	/* Populate the array. */
+	arrayEnd = eventArray + arrayLen;
+	for(arrayIt = eventArray; listIt && arrayIt < arrayEnd;
+			listIt = DListItem_get_next_item(listIt), ++arrayIt)
+	{
+		ListItemVal* val = ListItem_extract_value(*((ListItem**)listIt));
+		*arrayIt = (TimerEvent*)val->value;
+		val->value = NULL;
+		delListItemVal(&val);
+	}
+
+	qsort(eventArray, DList_get_count(handler->list), sizeof(TimerEvent*),
+			(int(*)(const void*, const void*))TimerEvent_compare_least_remaining_time);
+
+	/* Clear the list. */
+	DList_remove_count(handler->list, 0, arrayLen);
+
+	/* Push all the objects onto the new list. */
+	for(arrayIt = eventArray; arrayIt < arrayEnd; ++arrayIt)
+		DList_push_back(handler->list, newDListItem(*arrayIt, (alib_free_value)freeTimerEvent, NULL));
+
+
+	/* Cleanup the array. */
+	if(eventArray)free(eventArray);
+
+	pthread_cond_broadcast(&handler->cond);
+}
 
 	/* Callback Functions */
 /* Called whenever the timer rings on a child TimerEvent. */
@@ -158,10 +207,8 @@ static void timer_loop(TimerEventHandler* handler)
 			{
 				eTime = Timer_get_end_time_real_time(
 						TimerEvent_get_timer((TimerEvent*)DListItem_get_value(itm)));
-				printf("DEBU1\n");
 				pthread_cond_timedwait(&handler->cond, &handler->mutex,
 						&eTime);
-				printf("DEBUG2\n");
 			}
 		}
 	}
@@ -265,6 +312,48 @@ void TimerEventHandler_remove_tsafe(TimerEventHandler* handler,
 
 	pthread_mutex_unlock(&handler->mutex);
 }
+/* Removes 'event' from the handler list but does not free its memory.
+ *
+ * Returns the event removed. */
+TimerEvent* TimerEventHandler_extract_tsafe(TimerEventHandler* handler,
+		TimerEvent* event)
+{
+	if(!handler || !event)return(event);
+
+	if(pthread_mutex_lock(&handler->mutex) == 0)
+	{
+		/* Remove this from the child. */
+		TimerEvent_set_rang_parent_cb(event, NULL, NULL);
+		extract_event(handler, event);
+
+		pthread_mutex_unlock(&handler->mutex);
+	}
+	else
+	{
+		/* Remove this from the child. */
+		TimerEvent_set_rang_parent_cb(event, NULL, NULL);
+		extract_event(handler, event);
+	}
+
+	return(event);
+}
+
+/* Wakes the handler if it is currently waiting for a timer to ring. */
+void TimerEventHandler_wakeup(TimerEventHandler* handler)
+{
+	pthread_cond_broadcast(&handler->cond);
+}
+
+/* Sorts the events in the list where events with the shortest remaining
+ * time are placed at the beginning of the list. */
+//void TimerEventHandler_sort_tsafe(TimerEventHandler* handler)
+//{
+//	if(handler && pthread_mutex_lock(&handler->mutex) == 0)
+//	{
+//		sort_events(handler);
+//		pthread_mutex_unlock(&handler->mutex);
+//	}
+//}
 
 	/* Getters */
 /* Returns the number of events that the handler is handling. */

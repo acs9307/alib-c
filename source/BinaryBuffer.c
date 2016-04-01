@@ -143,6 +143,38 @@ alib_error BinaryBuffer_append(BinaryBuffer* buff, const void* data, size_t data
 	buff->len = new_data_len;
 	return(ALIB_OK);
 }
+/* Reads from an already opened file and places all data into the buffer.
+ * The file is read from the current position, therefore if the entire file
+ * should be read, ensure that the file has been set to the beginning or only
+ * a partial file will be read.
+ *
+ * Parameters:
+ * 		buff: The buffer to append the file to.
+ * 		file: The file to read from. */
+alib_error BinaryBuffer_append_file(BinaryBuffer* buff, FILE* file)
+{
+	if(!buff || !file)return(ALIB_BAD_ARG);
+
+	long rval = ftell(file);
+	size_t fileLen;
+
+	if(fseek(file, 0, SEEK_END))
+		return(ALIB_FILE_ERR);
+	fileLen = ftell(file) - rval;
+	if(fseek(file, rval, SEEK_SET))
+		return(ALIB_FILE_ERR);
+
+	/* Resize the buffer. */
+	if((rval = BinaryBuffer_expand_to_target(buff, buff->len + fileLen)))
+		return(rval);
+
+	rval = fread(buff->buff + buff->len, 1, fileLen, file);
+	if(rval < fileLen)
+		return(ALIB_FILE_READ_ERR);
+
+	buff->len += fileLen;
+	return(ALIB_OK);
+}
 /* Inserts a block of data into the BinaryBuffer at the specified index.
  *
  * Parameters:

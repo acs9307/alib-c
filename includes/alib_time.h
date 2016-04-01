@@ -131,8 +131,6 @@
 /***********************/
 
 /*******Timespec Functions*******/
-#include "alib_time.h"
-
 /* Attempts to fix the values in a timespec structure so that there
  * are no combination of negative and positive values within a
  * single timespec.  Also ensures that 'tv_nsec' does not overflow

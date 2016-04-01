@@ -1,12 +1,18 @@
-#include "proc_waiter.h"
-
+#if 0
 #include "ArrayList_protected.h"
+#else
+#include "proc_waiter.h"
+#include <alib-c/ArrayList_protected.h>
+#include <alib-c/alib_time.h>
+#endif
 
 /*******Private Globals*******/
 /* Thread should always be detached and should
  * never be joined. */
 pthread_t* PROC_WAITER_THREAD = NULL;
 pthread_cond_t* PROC_WAITER_T_COND = NULL;
+	/* Only used for PROC_WAITER_T_COND.
+	 * If modifying the list, only use the ArrayList's mutex. */
 pthread_mutex_t* PROC_WAITER_MUTEX = NULL;
 flag_pole PROC_WAITER_FLAG_POLE = 0;
 
@@ -40,8 +46,6 @@ static void* thread_proc(void* unused)
 		/* There are no child processes connected to the current process. */
 		if(pid < 0)
 		{
-			char shouldSleep = 0;
-
 			pthread_mutex_lock(PROC_WAITER_MUTEX);
 			if(!ArrayList_get_count(PROC_WAITER_CB_LIST))
 			{
@@ -53,34 +57,41 @@ static void* thread_proc(void* unused)
 			}
 			else if(PROC_WAITER_SLEEP_TIME < 0)
 				pthread_cond_wait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX);
-
-			pthread_mutex_unlock(PROC_WAITER_MUTEX);
-			if(shouldSleep)
-				usleep(PROC_WAITER_SLEEP_TIME);
-
-			continue;
-		}
-
-		/* Iterate through the list and call the registered callbacks. */
-		for(pw_it = (proc_waiter**)ArrayList_get_array_ptr(PROC_WAITER_CB_LIST), pw_it_count = 0;
-				pw_it_count < ArrayList_get_count(PROC_WAITER_CB_LIST);++pw_it)
-		{
-			if(*pw_it)
+			else
 			{
-				++pw_it_count;
-
-				/* Call the registered callback. */
-				if(((*pw_it)->pid < 0 || (*pw_it)->pid == pid))
+				struct timespec sleepTo;
+				clock_gettime(CLOCK_REALTIME, &sleepTo);
+				sleepTo.tv_nsec += PROC_WAITER_SLEEP_TIME;
+				timespec_fix_values(&sleepTo);
+				pthread_cond_timedwait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX, &sleepTo);
+			}
+			pthread_mutex_unlock(PROC_WAITER_MUTEX);
+		}
+		else
+		{
+			/* Iterate through the list and call the registered callbacks. */
+			ArrayList_lock(PROC_WAITER_CB_LIST);
+			for(pw_it = (proc_waiter**)ArrayList_get_array_ptr(PROC_WAITER_CB_LIST), pw_it_count = 0;
+					pw_it_count < ArrayList_get_count(PROC_WAITER_CB_LIST);++pw_it)
+			{
+				if(*pw_it)
 				{
-					if((*pw_it)->cb)
-						(*pw_it)->cb(pid, status, (*pw_it)->user_data);
+					++pw_it_count;
 
-					/* Deregister an event callback if the pid is not a wildcard
-					 * number. */
-					if((*pw_it)->pid > -1)
-						ArrayList_remove_by_ptr(PROC_WAITER_CB_LIST, (void**)pw_it);
+					/* Call the registered callback. */
+					if(((*pw_it)->pid < 0 || (*pw_it)->pid == pid))
+					{
+						if((*pw_it)->cb)
+							(*pw_it)->cb(pid, status, (*pw_it)->user_data);
+
+						/* Deregister an event callback if the pid is not a wildcard
+						 * number. */
+						if((*pw_it)->pid > -1)
+							ArrayList_remove_by_ptr(PROC_WAITER_CB_LIST, (void**)pw_it);
+					}
 				}
 			}
+			ArrayList_unlock(PROC_WAITER_CB_LIST);
 		}
 	}
 
@@ -141,8 +152,8 @@ void proc_waiter_stop()
 	 * the thread whenever a child process closes. */
 	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_STOP);
 
-	/* Wake up the thread if it is waiting for a condition change. */
-	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
+//	/* Wake up the thread if it is waiting for a condition change. */
+//	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
 		pthread_cond_broadcast(PROC_WAITER_T_COND);
 }
 /* Calls for the waiting thread to stop and then waits
@@ -176,7 +187,10 @@ void proc_waiter_stop_now()
 	 * a new process then close it immediately. */
 	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
 	{
-		if(!fork())
+		int pid = fork();
+		if(pid < 0)
+			return;
+		else if(!pid)
 			exit(0);
 		else
 			proc_waiter_stop_wait();
@@ -267,7 +281,7 @@ alib_error proc_waiter_register_no_start(int pid, proc_exited_cb proc_exited, vo
 		goto f_error;
 
 	/* Add the proc waiter to the list. */
-	if(!ArrayList_add_tsafe(PROC_WAITER_CB_LIST, pw))
+	if(!ArrayList_add(PROC_WAITER_CB_LIST, pw))
 	{
 		err = ALIB_MEM_ERR;
 		goto f_error;
@@ -325,6 +339,7 @@ void proc_waiter_deregister(int pid, proc_exited_cb proc_exited, void* user_data
 	/* Iterate through and deregister all process waiters. */
 	proc_waiter** pw_it = (proc_waiter**)ArrayList_get_array_ptr(PROC_WAITER_CB_LIST);
 	size_t pw_count;
+
 	for(pw_count = 0; pw_count < ArrayList_get_count(PROC_WAITER_CB_LIST); ++pw_it)
 	{
 		if(*pw_it)
@@ -335,11 +350,13 @@ void proc_waiter_deregister(int pid, proc_exited_cb proc_exited, void* user_data
 			if((pid < 0 || (*pw_it)->pid == pid) &&
 					(!proc_exited || (*pw_it)->cb == proc_exited) &&
 					(!user_data || (*pw_it)->user_data == user_data))
-				ArrayList_remove_by_ptr_tsafe(PROC_WAITER_CB_LIST, (void**)pw_it);
+			{
+				ArrayList_remove_by_ptr(PROC_WAITER_CB_LIST, (void**)pw_it);
+			}
 		}
 	}
 
-	ArrayList_shrink_tsafe(PROC_WAITER_CB_LIST);
+	ArrayList_shrink(PROC_WAITER_CB_LIST);
 	pthread_cond_broadcast(PROC_WAITER_T_COND);
 }
 /* Calls 'proc_waiter_deregister' on all registered callbacks. */
@@ -347,7 +364,7 @@ void proc_waiter_deregister_all()
 {
 	if(!PROC_WAITER_CB_LIST)return;
 
-	ArrayList_resize_tsafe(PROC_WAITER_CB_LIST, 0);
+	ArrayList_resize(PROC_WAITER_CB_LIST, 0);
 	pthread_cond_broadcast(PROC_WAITER_T_COND);
 }
 
@@ -358,7 +375,7 @@ void proc_waiter_deregister_all()
 void free_proc_waiter()
 {
 	/* Stop the waiter. */
-	proc_waiter_stop_now();
+	proc_waiter_stop_wait();
 
 	/* Free all data. */
 	delArrayList(&PROC_WAITER_CB_LIST);
@@ -367,23 +384,79 @@ void free_proc_waiter()
 		free(PROC_WAITER_THREAD);
 		PROC_WAITER_THREAD = NULL;
 	}
-	if(PROC_WAITER_MUTEX)
-	{
-		pthread_mutex_destroy(PROC_WAITER_MUTEX);
-		free(PROC_WAITER_MUTEX);
-		PROC_WAITER_MUTEX = NULL;
-	}
 	if(PROC_WAITER_T_COND)
 	{
 		pthread_cond_destroy(PROC_WAITER_T_COND);
 		free(PROC_WAITER_T_COND);
 		PROC_WAITER_T_COND = NULL;
 	}
+	if(PROC_WAITER_MUTEX)
+	{
+		pthread_mutex_destroy(PROC_WAITER_MUTEX);
+		free(PROC_WAITER_MUTEX);
+		PROC_WAITER_MUTEX = NULL;
+	}
 
 	/* Reset all flags. */
 	PROC_WAITER_FLAG_POLE = 0;
 }
 
+/*******Thread Safe Functions*******/
+/* Thread safe version of 'proc_waiter_register_no_start()'.
+ *
+ * Locks the ArrayList mutex. */
+alib_error proc_waiter_register_no_start_tsafe(int pid, proc_exited_cb proc_exited, void* user_data)
+{
+	if(!PROC_WAITER_CB_LIST)
+		allocate_globals();
+
+	alib_error err;
+	ArrayList_lock(PROC_WAITER_CB_LIST);
+	err = proc_waiter_register_no_start(pid, proc_exited, user_data);
+	ArrayList_unlock(PROC_WAITER_CB_LIST);
+
+	return(err);
+}
+/* Thread safe version of 'proc_waiter_register()'.
+ *
+ * Locks the ArrayList mutex. */
+alib_error proc_waiter_register_tsafe(int pid, proc_exited_cb proc_exited, void* user_data)
+{
+	if(!PROC_WAITER_CB_LIST)
+		allocate_globals();
+
+	alib_error err;
+	ArrayList_lock(PROC_WAITER_CB_LIST);
+	err = proc_waiter_register(pid, proc_exited, user_data);
+	ArrayList_unlock(PROC_WAITER_CB_LIST);
+
+	return(err);
+}
+/* Thread safe version of 'proc_waiter_deregister()'.
+ *
+ * Locks the ArrayList mutex. */
+void proc_waiter_deregister_tsafe(int pid, proc_exited_cb proc_exited, void* user_data)
+{
+	if(!PROC_WAITER_CB_LIST)
+		return;
+
+	ArrayList_lock(PROC_WAITER_CB_LIST);
+	proc_waiter_deregister(pid, proc_exited, user_data);
+	ArrayList_unlock(PROC_WAITER_CB_LIST);
+}
+/* Thread safe version of 'proc_waiter_deregister_all()'.
+ *
+ * Locks the ArrayList mutex. */
+void proc_waiter_deregister_all_tsafe()
+{
+	if(!PROC_WAITER_CB_LIST)
+		return;
+
+	ArrayList_lock(PROC_WAITER_CB_LIST);
+	proc_waiter_deregister_all();
+	ArrayList_unlock(PROC_WAITER_CB_LIST);
+}
+/***********************************/
 /*******Getters*******/
 /* Returns !0 if the waiter thread is running.  0 otherwise. */
 char proc_waiter_is_running(){return(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING);}

@@ -21,6 +21,21 @@ void ListItem_mark_for_removal(ListItem* item)
 {
 	item->removed = 1;
 }
+/* Extracts the ListItemValue from the item and marks
+ * the item for deletion without deleting the ListItem.
+ * ListItem's reference counter will not be decremented. */
+ListItemVal* ListItem_extract_value(ListItem* item)
+{
+	if(item)
+	{
+		ListItemVal* val = item->val;
+		item->val = NULL;
+		ListItem_mark_for_removal(item);
+		return(val);
+	}
+	else
+		return(NULL);
+}
 
 /*******Lifecycle*******/
 /* Constructs a new ListItem with the value set to the given

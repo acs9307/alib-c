@@ -40,6 +40,18 @@ alib_error TimerEventHandler_add_tsafe(TimerEventHandler* handler,
  * is taking an extended period of time to return. */
 void TimerEventHandler_remove_tsafe(TimerEventHandler* handler,
 		TimerEvent* event);
+/* Removes 'event' from the handler list but does not free its memory.
+ *
+ * Returns the event removed. */
+TimerEvent* TimerEventHandler_extract_tsafe(TimerEventHandler* handler,
+		TimerEvent* event);
+
+/* Wakes the handler if it is currently waiting for a timer to ring. */
+void TimerEventHandler_wakeup(TimerEventHandler* handler);
+
+/* Sorts the events in the list where events with the shortest remaining
+ * time are placed at the beginning of the list. */
+//void TimerEventHandler_sort_tsafe(TimerEventHandler* handler);
 
 	/* Getters */
 /* Returns the number of events that the handler is handling. */

@@ -424,6 +424,7 @@ TcpClient* newTcpClient(const char* host_addr, uint16_t port,
 	if(!client)return(NULL);
 
 	/* Initialize members. */
+	memset(&client->host_addr, 0, sizeof(client->host_addr));
 	host = gethostbyname(host_addr);
 	if(host)
 	{

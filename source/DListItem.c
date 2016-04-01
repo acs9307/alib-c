@@ -487,7 +487,7 @@ int DListItem_index(const DListItem* list)
 	if(!list)return(ALIB_BAD_ARG);
 
 	int index = 0;
-	for(; list; list = list->prev, ++index);
+	for(; list->prev; list = list->prev, ++index);
 
 	return(index);
 }

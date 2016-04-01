@@ -57,6 +57,15 @@ alib_error BinaryBuffer_resize(BinaryBuffer* buff, size_t new_size);
  * 		data_len: The number of bytes to append to the buffer.
  */
 alib_error BinaryBuffer_append(BinaryBuffer* buff, const void* data, size_t data_len);
+/* Reads from an already opened file and places all data into the buffer.
+ * The file is read from the current position, therefore if the entire file
+ * should be read, ensure that the file has been set to the beginning or only
+ * a partial file will be read.
+ *
+ * Parameters:
+ * 		buff: The buffer to append the file to.
+ * 		file: The file to read from. */
+alib_error BinaryBuffer_append_file(BinaryBuffer* buff, FILE* file);
 /* Inserts a block of data into the BinaryBuffer at the specified index.
  *
  * Parameters:

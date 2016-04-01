@@ -52,7 +52,7 @@ alib_error timespec_fix_values(struct timespec* t)
  * Returns:
  * 		1: 'a' is greater than 'b' (i.e. 'a' came after 'b').
  * 		0: 'a' and 'b' are equal.
- * 		-1: 'b' is less than 'a' (i.e. 'b' came after 'a').
+ * 		-1: 'a' is less than 'b' (i.e. 'b' came after 'a').
  *
  * Assumes 'a' and 'b' are not null and that both have been
  * 'fixed' (see 'timespec_fix()'). */
@@ -79,7 +79,7 @@ char timespec_cmp_fast(const struct timespec* a, const struct timespec* b)
  * Returns:
  * 		1: 'a' is greater than 'b' (i.e. 'a' came after 'b').
  * 		0: 'a' and 'b' are equal.
- * 		-1: 'b' is less than 'a' (i.e. 'b' came after 'a'). */
+ * 		-1: 'a' is less than 'b' (i.e. 'b' came after 'a'). */
 char timespec_cmp(struct timespec a, struct timespec b)
 {
 	timespec_fix_values(&a);

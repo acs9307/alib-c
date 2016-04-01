@@ -200,4 +200,32 @@ alib_error file_remove_data_at(const char* file_name, size_t pos,
 		size_t bytes, file_remove_option option);
 /*-----------------------------------------*/
 
+/*------------File Path Parsing------------*/
+/* Returns the name of a file from the given path.
+ * Supports both '/' and '\' directory delimiters.
+ *
+ * If the path is a directory path and does not include a trailing
+ * directory delimiter, then the name of the directory will be returned.
+ *
+ * If the final character in the path is a directory delimiter, then the
+ * return string will be an empty string.
+ *
+ * Whitespaces are treated as part of the string.
+ *
+ * Parameters:
+ * 		path: The path to evaluate.
+ * 		count: The number of characters to evaluate.
+ * 			If 0, 'strlen()' will be used on 'path' to set 'count'.
+ *
+ * Returns:
+ * 		Returns the name of the file from the given path.  If no directory
+ * 		delimiters are contained within 'path', 'path' will be returned.
+ *
+ * 		The returned value is a substring of 'path', therefore no memory is
+ * 		copied or allocated. */
+const char* file_name_from_path_count(const char* path, size_t count);
+/* Same as 'file_name_from_path_count(path, strlen(path))'. */
+const char* file_name_from_path(const char* path);
+/*-----------------------------------------*/
+
 #endif

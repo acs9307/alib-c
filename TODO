@@ -1,3 +1,5 @@
+Give DList a sorting function. 
+
 Fix race condition with 'free_proc_waiter()'.  Sticks on some platforms.  Looks like 'wait' returns before a condition is raised?
 
 Finish ZipIter classes.

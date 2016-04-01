@@ -1,4 +1,8 @@
+#if 0
 #include "ArrayList_private.h"
+#else
+#include <alib-c/ArrayList_private.h>
+#endif
 
 /*******PROTECTED FUNCTIONS*******/
 /* Protected function used to remove items from the list pointer then
@@ -81,37 +85,23 @@ char ArrayList_add(ArrayList* list, void* item)
 				return 1;
 			}
 		}
-	}
 
-	/* The list is full and cannot be expanded anymore, return false. */
-	if(list->capacity == list->max_cap)
+		/* Something terrible happened, object corruption...*/
 		return(0);
-	/* No list exists, we just set the capacity to 1. */
-	else if(list->capacity == 0)
-		list->capacity = 1;
-	/* Check to see if the highest order bit is set, if so, then
-	 * we set the value to the maximum size. */
-	else if(list->capacity & INT64_MIN)
-		list->capacity = list->max_cap;
-	/* Increment the capacity by two times. */
+	}
 	else
-		list->capacity = list->capacity << 1;
-
-	/* Reallocate the memory. */
-	list->list = realloc(list->list, list->capacity * sizeof(int*));
-	item_it = (int**)list->list + list->count;
-
-	/* Iterate backwards through all the new items in the list and set
-	 * them to null. */
-	for(item_count = list->capacity; item_count > list->count;
-			--item_count, ++item_it)
-		*item_it = NULL;
-
-	/* Set an empty slot to the given value.  This slot should be the next slot
-	 * in the list. */
-	item_it = ((int**)list->list) + list->count;
-	*item_it = item;
-	++list->count;
+	{
+		if(list->capacity == list->max_cap)
+			return(0);
+		else
+		{
+			ArrayList_expand(list);
+			/* Set an empty slot to the given value.  This slot should be the next slot
+			 * in the list. */
+			list->list[list->count] = item;
+			++list->count;
+		}
+	}
 
 	return(1);
 }
@@ -283,8 +273,17 @@ size_t ArrayList_resize(ArrayList* list, size_t newcap)
 
 	/* Check for error. */
 	if(!list)return(0);
+	else if(newcap == list->capacity)
+		return(newcap);
 
-	if(newcap > 0)
+	if(!list->list)
+	{
+		if(newcap > list->max_cap)
+			newcap = list->max_cap;
+
+		list->list = calloc(newcap, sizeof(void*));
+	}
+	else if(newcap > 0)
 	{
 		if(newcap < list->capacity)
 		{
@@ -319,11 +318,7 @@ size_t ArrayList_resize(ArrayList* list, size_t newcap)
 		else
 		{
 			list->list = realloc(list->list, sizeof(void*) * newcap);
-
-			/* Nullify all the new pointers. */
-			for(list_it = list->list + list->capacity; list->capacity < newcap;
-					++list->capacity, ++list_it)
-				*list_it = NULL;
+			memset(list->list + list->capacity, 0, (newcap - list->capacity) * sizeof(void*));
 		}
 	}
 	/* We are just supposed to free everything. */
@@ -354,6 +349,27 @@ size_t ArrayList_shrink(ArrayList* list)
 		return(0);
 	else
 		return(ArrayList_resize(list, list->count));
+}
+/* Doubles the allocated memory of the list, if possible.
+ *
+ * Returns the capacity of the ArrayList. */
+size_t ArrayList_expand(ArrayList* list)
+{
+	if(!list)return(0);
+
+	if(list->capacity == 0)
+		ArrayList_resize(list, 1);
+	else if(list->capacity < list->max_cap)
+	{
+		/* If we can't double the memory size, then we simply
+		 * resize to the maximum size. */
+		if(list->max_cap - list->capacity < list->capacity)
+			ArrayList_resize(list, list->max_cap);
+		else
+			ArrayList_resize(list, list->capacity * 2);
+	}
+
+	return(list->capacity);
 }
 
 /* Sifts all the filled pointers to the first part of the array.

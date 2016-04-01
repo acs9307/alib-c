@@ -26,5 +26,10 @@ struct ThreadedTimerEvent
 };
 
 
+/* Constructors */
+/* Initializes a ThreadedTimerEvent. */
+void initThreadedTimerEvent(ThreadedTimerEvent** event, Timer* timer, char refTimer, TimerEvent_rang_cb rang_cb,
+		void* exData, alib_free_value freeExData);
+/****************/
 
 #endif

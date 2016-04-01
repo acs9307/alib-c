@@ -152,11 +152,19 @@ alib_error ErrorLogger_log_error(ErrorLogger* logger, const char* loc, int err_c
 	fputs(json_object_to_json_string(obj), logger->file);
 	fputc('\n', logger->file);
 	fflush(logger->file);
-	fclose(logger->file);
+	
+	if(logger->file)
+		fclose(logger->file);
 	logger->file = NULL;
 
 	++logger->log_count;
-	pthread_mutex_unlock(&logger->mutex);
+	
+	/* Unlock the mutex only if we were successful in locking the mutex. */
+	if(timeout)
+		pthread_mutex_unlock(&logger->mutex);
+	
+	if(obj)
+		json_object_put(obj);
 	return(ALIB_OK);
 }
 
