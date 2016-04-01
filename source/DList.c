@@ -314,7 +314,7 @@ alib_error DList_remove_count_lsafe(DList* list, size_t index, size_t count)
  * 			will fail. */
 alib_error DList_remove_item(DList* list, DListItem* item)
 {
-	if(!list || item->base.parent != list)return(ALIB_BAD_ARG);
+	if(!list || !item || item->base.parent != list)return(ALIB_BAD_ARG);
 
 	if(item == list->begin)
 	{
