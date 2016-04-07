@@ -71,7 +71,9 @@ int get_proc_pids(const char** procNames, size_t procNameCount, int** pids)
 					if(fbuff[readCount - 1] == 0)
 						--readCount;
 
-					if(str_match(fbuff, readCount, *nameIter,
+					/* We compare with the string length as the file will also contain the arguments.
+					 * Null terminations separate each argument, so using strlen should suffice. */
+					if(str_match(fbuff, strlen(fbuff), *nameIter,
 							strlen(*nameIter)) == 0)
 					{
 						BinaryBuffer_append(pidBuff, &dirNum, sizeof(dirNum));

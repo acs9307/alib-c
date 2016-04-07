@@ -1,3 +1,12 @@
+----Version 1.4.2----
+alib_proc:
+	Modified comparison of strings.  Originally would compare the entire file to the provided strings, now it only compares the first argument in the file.
+
+proc_waiter:
+	Removed shrinking of ArrayList, was having problems with allocation and reallocation of memory in multi-threaded environment, seems to be some race conditions remaining in ArrayList.  Mainly removed because there is no real point in reallocating memory so much.
+	The array list now starts with a capacity of 0 upon allocation of globals. 
+	Made 'proc_waiter_stop_wait()' lower the THREAD_IS_RUNNING flag after it has been joined as we may cancel the thread.
+
 ----Version 1.4.1----
 alib_string:
 	Fixed 'str_match()' so that it does not compare past the end of the string.  Did not have any impact on runtime except for a wasted comparison, however it made Valgrind very angry.

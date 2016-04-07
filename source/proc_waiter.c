@@ -103,8 +103,9 @@ static void* thread_proc(void* unused)
 							(*pw_it)->cb(pid, status, (*pw_it)->user_data);
 
 						/* Deregister an event callback if the pid is not a wildcard
-						 * number. */
-						if((*pw_it)->pid > -1)
+						 * number. Check 'pw_it' again to ensure it wasn't deleted in
+						 * the callback. */
+						if(*pw_it && (*pw_it)->pid > -1)
 							ArrayList_remove_by_ptr(PROC_WAITER_CB_LIST, (void**)pw_it);
 					}
 				}
@@ -123,7 +124,7 @@ static alib_error allocate_globals()
 	/* Init the list. */
 	if(!PROC_WAITER_CB_LIST)
 	{
-		PROC_WAITER_CB_LIST = newArrayList(free);
+		PROC_WAITER_CB_LIST = newArrayList_ex(free, 0, 0, 1);
 		if(!PROC_WAITER_CB_LIST)
 			return(ALIB_MEM_ERR);
 	}
@@ -185,11 +186,17 @@ void proc_waiter_stop_wait()
 	proc_waiter_stop();
 
 	/* Detach if joining fails. */
-	if((PROC_WAITER_FLAG_POLE & THREAD_CREATED) &&
-			pthread_join(*PROC_WAITER_THREAD, NULL))
+	if((PROC_WAITER_FLAG_POLE & THREAD_CREATED))
 	{
-		/* Join failed for some odd reason, try detaching and continuing on. */
-		pthread_detach(*PROC_WAITER_THREAD);
+		if(pthread_join(*PROC_WAITER_THREAD, NULL))
+		{
+			/* Join failed for some odd reason, try detaching and continuing on. */
+			pthread_detach(*PROC_WAITER_THREAD);
+		}
+		/* If the thread was canceled and this function was called,
+		 * then the running flag may not have been lowered. */
+		else
+			flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
 	}
 
 	flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_CREATED);
@@ -404,7 +411,6 @@ void proc_waiter_deregister(int pid, proc_exited_cb proc_exited, void* user_data
 		}
 	}
 
-	ArrayList_shrink(PROC_WAITER_CB_LIST);
 	pthread_cond_broadcast(PROC_WAITER_T_COND);
 }
 /* Calls 'proc_waiter_deregister' on all registered callbacks. */
@@ -423,6 +429,7 @@ void proc_waiter_deregister_all()
 void free_proc_waiter()
 {
 	/* Stop the waiter. */
+	proc_waiter_stop_now();
 	proc_waiter_stop_wait();
 
 	/* Free all data. */
