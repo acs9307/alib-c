@@ -1,10 +1,11 @@
-#if 0
+#if 1
 #include "ArrayList_protected.h"
-#else
 #include "proc_waiter.h"
+#else
 #include <alib-c/ArrayList_protected.h>
-#include <alib-c/alib_time.h>
+#include <alib-c/proc_waiter.h>
 #endif
+
 
 /*******Private Globals*******/
 /* Thread should always be detached and should
@@ -38,18 +39,34 @@ static void* thread_proc(void* unused)
 	proc_waiter** pw_it;
 	size_t pw_it_count;
 
+	if(!proc_waiter_is_initialized())
+		return(NULL);
+
 	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
-	while(!(PROC_WAITER_FLAG_POLE & THREAD_STOP))
+	while(PROC_WAITER_CB_LIST && !(PROC_WAITER_FLAG_POLE & THREAD_STOP))
 	{
+#ifdef __ANDROID__
 		pid = wait(&status);
+#else
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+		pid = wait(&status);
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+#endif
 
 		/* There are no child processes connected to the current process. */
 		if(pid < 0)
 		{
 			pthread_mutex_lock(PROC_WAITER_MUTEX);
+			if(!PROC_WAITER_CB_LIST)
+			{
+				pthread_mutex_unlock(PROC_WAITER_MUTEX);
+				break;
+			}
+
 			if(!ArrayList_get_count(PROC_WAITER_CB_LIST))
 			{
-				while(!ArrayList_get_count(PROC_WAITER_CB_LIST) &&
+				while(PROC_WAITER_CB_LIST &&
+						!ArrayList_get_count(PROC_WAITER_CB_LIST) &&
 						!(PROC_WAITER_FLAG_POLE & THREAD_STOP))
 				{
 					pthread_cond_wait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX);
@@ -65,6 +82,7 @@ static void* thread_proc(void* unused)
 				timespec_fix_values(&sleepTo);
 				pthread_cond_timedwait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX, &sleepTo);
 			}
+
 			pthread_mutex_unlock(PROC_WAITER_MUTEX);
 		}
 		else
@@ -146,15 +164,15 @@ static alib_error allocate_globals()
  * continue to run until at least one process exits. */
 void proc_waiter_stop()
 {
-	if(!PROC_WAITER_THREAD)return;
+	if(!proc_waiter_is_initialized())
+		return;
 
 	/* Raise the flag to stop the thread, this should stop
 	 * the thread whenever a child process closes. */
 	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_STOP);
 
-//	/* Wake up the thread if it is waiting for a condition change. */
-//	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
-		pthread_cond_broadcast(PROC_WAITER_T_COND);
+	/* Wake up the thread if it is waiting for a condition change. */
+	pthread_cond_broadcast(PROC_WAITER_T_COND);
 }
 /* Calls for the waiting thread to stop and then waits
  * for it to return.
@@ -162,17 +180,19 @@ void proc_waiter_stop()
  * WILL BLOCK.*/
 void proc_waiter_stop_wait()
 {
+	if(!proc_waiter_is_initialized())return;
+
 	proc_waiter_stop();
 
-	pthread_mutex_lock(PROC_WAITER_MUTEX);
-	while(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
+	/* Detach if joining fails. */
+	if((PROC_WAITER_FLAG_POLE & THREAD_CREATED) &&
+			pthread_join(*PROC_WAITER_THREAD, NULL))
 	{
-		struct timespec timeout;
-		clock_gettime(CLOCK_REALTIME, &timeout);
-		timeout.tv_sec += 1;
-		pthread_cond_timedwait(PROC_WAITER_T_COND, PROC_WAITER_MUTEX, &timeout);
+		/* Join failed for some odd reason, try detaching and continuing on. */
+		pthread_detach(*PROC_WAITER_THREAD);
 	}
-	pthread_mutex_unlock(PROC_WAITER_MUTEX);
+
+	flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_CREATED);
 }
 /* Forces the process waiter to stop immediately.
  * It is suggested to use 'proc_waiter_stop()' or
@@ -183,8 +203,8 @@ void proc_waiter_stop_now()
 {
 	proc_waiter_stop();
 
-	/* If the thread is running, then we need to fork
-	 * a new process then close it immediately. */
+	/* Android does not support 'pthread_cancel()'. */
+#ifdef __ANDROID__
 	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
 	{
 		int pid = fork();
@@ -195,10 +215,33 @@ void proc_waiter_stop_now()
 		else
 			proc_waiter_stop_wait();
 	}
+#else
+	/* If the thread is running, then we need to fork
+	 * a new process then close it immediately. */
+	if(PROC_WAITER_FLAG_POLE & THREAD_CREATED)
+	{
+		/* If cancel succeeds, then we modify the running
+		 * state of the thread. */
+		if(pthread_cancel(*PROC_WAITER_THREAD) == 0)
+		{
+			flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
+				/* Detach if joining fails. */
+			if(pthread_join(*PROC_WAITER_THREAD, NULL))
+			{
+				pthread_detach(*PROC_WAITER_THREAD);
+			}
+		}
+		/* We were unable to cancel the thread, so lets detach it. */
+		else
+			pthread_detach(*PROC_WAITER_THREAD);
+
+		flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_CREATED);
+	}
+#endif
 }
 
 /* Starts the thread.  If the thread is already running
- * 'ALIB_OK' will be returned.
+ * ALIB_OK will be returned.
  *
  * Waiting for child processes to close is handled on a separate thread. */
 alib_error proc_waiter_start()
@@ -206,37 +249,37 @@ alib_error proc_waiter_start()
 	int err = allocate_globals();
 	if(err)return(err);
 
+	/* Make sure we don't call start at the same time from two different threads. */
+	pthread_mutex_lock(PROC_WAITER_MUTEX);
+
 	/* Setup the flags as needed. */
 	flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_STOP);
 
-	/* Create the thread. */
-	pthread_mutex_lock(PROC_WAITER_MUTEX);
-
-	/* Check to see if we are still running. */
-	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
+	if((PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING) &&
+			(PROC_WAITER_FLAG_POLE & THREAD_CREATED))
 	{
 		err = ALIB_OK;
 		goto f_unlock;
 	}
 
+	/* Check to see if we are still running. */
+	if(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING)
+		proc_waiter_stop_now();
+
+	/* Ensure our thread is cleaned up. */
+	if(PROC_WAITER_FLAG_POLE & THREAD_CREATED)
+		pthread_join(*PROC_WAITER_THREAD, NULL);
+
 	/* Raise the THREAD_IS_RUNNING flag before creating the thread so that the flag
 	 * will never misrepresent the state of the thread. */
-	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
+	flag_raise(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING | THREAD_CREATED);
 	if(pthread_create(PROC_WAITER_THREAD, NULL, thread_proc, NULL))
 	{
-		flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING);
+		flag_lower(&PROC_WAITER_FLAG_POLE, THREAD_IS_RUNNING | THREAD_CREATED);
 		err = ALIB_THREAD_ERR;
 		goto f_unlock;
 	}
 
-	/* Detach the thread. */
-	if(pthread_detach(*PROC_WAITER_THREAD))
-	{
-		proc_waiter_stop_now();
-		pthread_join(*PROC_WAITER_THREAD, NULL);
-		err = ALIB_THREAD_ERR;
-		goto f_unlock;
-	}
 f_unlock:
 	pthread_mutex_unlock(PROC_WAITER_MUTEX);
 
@@ -266,8 +309,12 @@ void proc_waiter_wakeup()
  * 			If <0, the callback will be called for any PID that is returned by 'wait()'.
  * 		proc_exited: The callback called when 'wait()' returns a PID that matches 'pid'.
  * 		user_data: Data to be passed to the callback when called. */
-alib_error proc_waiter_register_no_start(int pid, proc_exited_cb proc_exited, void* user_data)
+alib_error proc_waiter_register_no_start(int pid, proc_exited_cb proc_exited,
+		void* user_data)
 {
+	if(!proc_waiter_is_initialized())
+		return(ALIB_STATE_ERR);
+
 	int err;
 	proc_waiter* pw = malloc(sizeof(proc_waiter));
 	if(!pw)return(ALIB_MEM_ERR);
@@ -290,6 +337,7 @@ alib_error proc_waiter_register_no_start(int pid, proc_exited_cb proc_exited, vo
 		pthread_cond_broadcast(PROC_WAITER_T_COND);
 
 	return(ALIB_OK);
+
 f_error:
 	free(pw);
 	return(err);
@@ -334,7 +382,7 @@ alib_error proc_waiter_register(int pid, proc_exited_cb proc_exited, void* user_
  * 			be deregistered. */
 void proc_waiter_deregister(int pid, proc_exited_cb proc_exited, void* user_data)
 {
-	if(!PROC_WAITER_CB_LIST)return;
+	if(!proc_waiter_is_initialized())return;
 
 	/* Iterate through and deregister all process waiters. */
 	proc_waiter** pw_it = (proc_waiter**)ArrayList_get_array_ptr(PROC_WAITER_CB_LIST);
@@ -362,7 +410,7 @@ void proc_waiter_deregister(int pid, proc_exited_cb proc_exited, void* user_data
 /* Calls 'proc_waiter_deregister' on all registered callbacks. */
 void proc_waiter_deregister_all()
 {
-	if(!PROC_WAITER_CB_LIST)return;
+	if(!proc_waiter_is_initialized())return;
 
 	ArrayList_resize(PROC_WAITER_CB_LIST, 0);
 	pthread_cond_broadcast(PROC_WAITER_T_COND);
@@ -384,6 +432,7 @@ void free_proc_waiter()
 		free(PROC_WAITER_THREAD);
 		PROC_WAITER_THREAD = NULL;
 	}
+
 	if(PROC_WAITER_T_COND)
 	{
 		pthread_cond_destroy(PROC_WAITER_T_COND);
@@ -407,8 +456,7 @@ void free_proc_waiter()
  * Locks the ArrayList mutex. */
 alib_error proc_waiter_register_no_start_tsafe(int pid, proc_exited_cb proc_exited, void* user_data)
 {
-	if(!PROC_WAITER_CB_LIST)
-		allocate_globals();
+	allocate_globals();
 
 	alib_error err;
 	ArrayList_lock(PROC_WAITER_CB_LIST);
@@ -422,8 +470,7 @@ alib_error proc_waiter_register_no_start_tsafe(int pid, proc_exited_cb proc_exit
  * Locks the ArrayList mutex. */
 alib_error proc_waiter_register_tsafe(int pid, proc_exited_cb proc_exited, void* user_data)
 {
-	if(!PROC_WAITER_CB_LIST)
-		allocate_globals();
+	allocate_globals();
 
 	alib_error err;
 	ArrayList_lock(PROC_WAITER_CB_LIST);
@@ -463,6 +510,15 @@ char proc_waiter_is_running(){return(PROC_WAITER_FLAG_POLE & THREAD_IS_RUNNING);
 /* Returns the number of microseconds the process waiter will sleep when
  * no child processes are connected to the current process. */
 int64_t proc_waiter_get_sleep_time(){return(PROC_WAITER_SLEEP_TIME);}
+/* Returns true if the process waiter's globals have been initialized. */
+char proc_waiter_is_initialized()
+{
+	if(!PROC_WAITER_MUTEX || !PROC_WAITER_THREAD || !PROC_WAITER_T_COND ||
+			!PROC_WAITER_CB_LIST)
+		return(0);
+	else
+		return(1);
+}
 /*********************/
 
 /*******Setters*******/

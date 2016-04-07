@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include "ArrayList_private.h"
 #else
 #include <alib-c/ArrayList_private.h>
@@ -940,7 +940,14 @@ ArrayList* newArrayList_ex(alib_free_value free_item, size_t start_capacity,
 		pthread_mutex_init(&list->mutex, NULL);
 
 	/* Allocate list memory. We want all values to be NULL, so we use calloc. */
-	list->list = calloc(list->capacity, sizeof(int*));
+	if(list->capacity)
+		list->list = calloc(list->capacity, sizeof(int*));
+	else
+		list->list = NULL;
+
+	/* Ensure we were able to allocate the list. */
+	if(list->capacity && !list->list)
+		delArrayList(&list);
 
 	return(list);
 }

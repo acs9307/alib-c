@@ -116,6 +116,17 @@ alib_error String_append_double(String* str, const double val);
  * 			in all upper case characters, otherwise all lower case
  * 			characters will be appended. */
 alib_error String_append_bool(String* str, size_t val, char upper);
+/* Appends a file to the end of the string.
+ *
+ * Parameters:
+ * 		str: The String object to modify.
+ * 		file: The file to read into the string.
+ * 			If 'file' reaches EOF, appending is stopped.
+ * 			Appending will start at the current position of 'file'.
+ * 			Upon successful reading, 'file' should have EOF raised, if
+ * 			later reading is required, the user must ensure to modify the
+ * 			file positioning before and after the call to append. */
+alib_error String_append_file(String* str, FILE* file);
 
 /* Inserts a c-string at a specific index.
  *

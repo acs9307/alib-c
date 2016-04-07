@@ -1,4 +1,8 @@
+#if 1
 #include "alib_string.h"
+#else
+#include <alib-c/alib_string.h>
+#endif
 
 /* Copies a string from 'from' to 'to' by iterating backwards.  Behaves
  * similarly to strcpy() except that copying is done backwards so that
@@ -348,8 +352,8 @@ char* find_last_char_count(const char* str, char c, size_t count)
     r_ptr = (char*)(str + count - 1);
 
     /* Iterate backwards through the string. */
-    for(; *r_ptr != c && r_ptr != str - 1; --r_ptr);
-    if(*r_ptr == c)
+    for(; r_ptr > str - 1 && *r_ptr != c; --r_ptr);
+    if(r_ptr > str - 1 && *r_ptr == c)
         return(r_ptr);
     else
         return(NULL);
@@ -420,7 +424,7 @@ char str_match(const char* str1, size_t str1_len,
 
 	/* Compare by iterating the the big iterators first. */
 	for(cmp_big_it = (size_t*)str1, cmp_big_it2 = (size_t*)str2;
-			*cmp_big_it == *cmp_big_it2 && str1_len > sizeof(size_t);
+			str1_len > sizeof(size_t) && *cmp_big_it == *cmp_big_it2;
 			str1_len -= sizeof(size_t), ++cmp_big_it, ++cmp_big_it2);
 	if(str1_len > sizeof(size_t))
 	{

@@ -189,6 +189,29 @@ alib_error String_append_bool(String* str, size_t val, char upper)
 	else
 		return(String_append_count(str, (upper)?FALSE_STRING_UPPER:FALSE_STRING, FALSE_STRING_LEN));
 }
+/* Appends a file to the end of the string.
+ *
+ * Parameters:
+ * 		str: The String object to modify.
+ * 		file: The file to read into the string.
+ * 			If 'file' reaches EOF, appending is stopped.
+ * 			Appending will start at the current position of 'file'.
+ * 			Upon successful reading, 'file' should have EOF raised, if
+ * 			later reading is required, the user must ensure to modify the
+ * 			file positioning before and after the call to append. */
+alib_error String_append_file(String* str, FILE* file)
+{
+	if(!str)return(ALIB_BAD_ARG);
+
+	if(str->base.len > 0)
+		str->base.len -= 1;
+	alib_error err = BinaryBuffer_append_file((BinaryBuffer*)str, file);
+	if(!err)
+		err = BinaryBuffer_append((BinaryBuffer*)str, "\0", 1);
+	else
+		BinaryBuffer_append((BinaryBuffer*)str, "\0", 1);
+	return(err);
+}
 
 /* Inserts a c-string at a specific index.
  *

@@ -1,3 +1,20 @@
+----Version 1.4.1----
+alib_string:
+	Fixed 'str_match()' so that it does not compare past the end of the string.  Did not have any impact on runtime except for a wasted comparison, however it made Valgrind very angry.
+	Added 'PTHREAD_CANCEL_*' definitions for android...thanks google.
+
+ArrayList:
+	Fixed bug where a start capacity of 0 could possibly set 'list' to non-null.
+	Added check to ensure 'list' is allocated in 'newArrayList_ex()'. 
+
+proc_waiter:
+	Added 'proc_waiter_is_initialized()'.
+	Fixed bug where calling 'proc_waiter_stop*()' could cause a segment fault if the process waiter had not been initialized. 
+	Fixed bug with segment fault during 'free_proc_waiter()' when the process waiter was never initialized. 
+	
+String:
+	Added 'String_append_file()'.
+
 ----Version 1.4.0----
 alib_file:
 	Added 'file_name_from_path()' and 'file_name_from_path_count()'. 

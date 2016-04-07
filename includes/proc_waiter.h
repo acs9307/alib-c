@@ -5,15 +5,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#if 0
+#include "alib_time.h"
 #include "alib_error.h"
 #include "ArrayList.h"
 #include "flags.h"
-#else
-#include <alib-c/alib_error.h>
-#include <alib-c/ArrayList.h>
-#include <alib-c/flags.h>
-#endif
 
 typedef void (*proc_exited_cb)(int pid, int status, void* user_data);
 
@@ -125,6 +120,8 @@ char proc_waiter_is_running();
 /* Returns the number of microseconds the process waiter will sleep when
  * no child processes are connected to the current process. */
 int64_t proc_waiter_get_sleep_time();
+/* Returns true if the process waiter's globals have been initialized. */
+char proc_waiter_is_initialized();
 /*********************/
 
 /*******Setters*******/
