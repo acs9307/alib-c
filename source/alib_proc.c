@@ -1,4 +1,8 @@
+#if 1
 #include "alib_proc.h"
+#else
+#include <alib-c/alib_proc.h>
+#endif
 
 /* Returns the PIDs of applications with a name matching 'procName'.
  *
@@ -19,7 +23,7 @@ int get_proc_pids(const char** procNames, size_t procNameCount, int** pids)
 	const char** nameIter;
 	size_t nameIterCount;
 	BinaryBuffer* pidBuff = newBinaryBuffer();
-	char fbuff[8 * 1024];
+	char fbuff[8 * 1024] = {0};
 	int readCount;
 	char** dirNames = NULL, **it;
 	int itCount, err;
