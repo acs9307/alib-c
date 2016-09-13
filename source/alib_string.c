@@ -1,8 +1,4 @@
-#if 1
 #include "alib_string.h"
-#else
-#include <alib-c/alib_string.h>
-#endif
 
 /* Copies a string from 'from' to 'to' by iterating backwards.  Behaves
  * similarly to strcpy() except that copying is done backwards so that
@@ -140,7 +136,7 @@ char* strncpy_alloc(char** to, const char* from, size_t count)
 		return((*to)?*to:NULL);
 
 	/* Allocate memory and copy data. */
-	new_str = malloc(count + 1);
+	new_str = (char*)malloc(count + 1);
 	strncpy(new_str, from, count);
 	new_str[count] = '\0';
 
@@ -205,9 +201,12 @@ char* strncpy_fast(char* to, const char* from, size_t count, size_t* coppied_cou
  * 		count: The number of bytes to copy.
  *
  * Returns 'to'.*/
-void* memcpy_back(void* to, const void* from, size_t count)
-{
-	if(!to || !from)return(to);
+void* memcpy_back(void* t, const void* f, size_t count)
+{  
+	if(!t || !f)return(t);
+
+        const unsigned char* from = (const unsigned char*)f;
+        unsigned char* to = (unsigned char*)t;
 
 	/* Must modify the count to put it into index
 	 * mode. */
@@ -217,7 +216,7 @@ void* memcpy_back(void* to, const void* from, size_t count)
 	for(; count > 0; --count, --from, --to)
 		*((char*)to) = *((char*)from);
 
-	return(to);
+	return((void*)to);
 }
 /* Copies memory from one location to another.  This is done by choosing
  * either 'memcpy_back()' and 'memcpy()' to copy the memory so that overlapping
@@ -246,23 +245,27 @@ void* memcpy_safe(void* to, const void* from, size_t count)
  * by the caller. */
 char* itoa(long long num)
 {
-	char* str = malloc(LLONG_MAX_CHAR_LEN + 1);
-	if(!str)return(NULL);
+       char* str = malloc(LLONG_MAX_CHAR_LEN + 1);
+       if(!str)return(NULL);
 
-	sprintf(str, "%lld", num);
-	str = realloc(str, strlen(str) + 1);
-	return(str);
+       sprintf(str, "%lld", num);
+       str = realloc(str, strlen(str) + 1);
+       return(str);
 }
 /* Creates a new character string representation of the given unsigned integer
  * value.  The returned string is dynamically allocated and must be freed
  * by the caller. */
 char* uitoa(unsigned long long num)
 {
-	char* str = malloc(ULLONG_MAX_CHAR_LEN + 1);
+	char* str = (char*)malloc(ULLONG_MAX_CHAR_LEN + 1);
 	if(!str)return(NULL);
 
+#if __linux__
 	sprintf(str, "%llu", num);
-	str = realloc(str, strlen(str) + 1);
+#else
+	sprintf(str, "%lu", num);
+#endif
+	str = (char*)realloc(str, strlen(str) + 1);
 	return(str);
 }
 /* Creates a new character string representation of the given double
@@ -270,11 +273,11 @@ char* uitoa(unsigned long long num)
  * by the caller. */
 char* ftoa(double num)
 {
-	char* str = malloc(DOUBLE_MAX_CHAR_LEN + 1);
+	char* str = (char*)malloc(DOUBLE_MAX_CHAR_LEN + 1);
 	if(!str)return(NULL);
 
 	sprintf(str, "%f", num);
-	str = realloc(str, strlen(str) + 1);
+	str = (char*)realloc(str, strlen(str) + 1);
 	return(str);
 }
 
@@ -349,11 +352,11 @@ char* find_last_char_count(const char* str, char c, size_t count)
 
     /* Set the pointer to the end of the string,
      * we will iterate backwards. */
-    r_ptr = (char*)(str + count - 1);
+    r_ptr = (char*)(str + count);
 
     /* Iterate backwards through the string. */
-    for(; r_ptr > str - 1 && *r_ptr != c; --r_ptr);
-    if(r_ptr > str - 1 && *r_ptr == c)
+    for(; *r_ptr != c && r_ptr != str - 1; --r_ptr);
+    if(*r_ptr == c)
         return(r_ptr);
     else
         return(NULL);
@@ -424,7 +427,7 @@ char str_match(const char* str1, size_t str1_len,
 
 	/* Compare by iterating the the big iterators first. */
 	for(cmp_big_it = (size_t*)str1, cmp_big_it2 = (size_t*)str2;
-			str1_len > sizeof(size_t) && *cmp_big_it == *cmp_big_it2;
+			*cmp_big_it == *cmp_big_it2 && str1_len > sizeof(size_t);
 			str1_len -= sizeof(size_t), ++cmp_big_it, ++cmp_big_it2);
 	if(str1_len > sizeof(size_t))
 	{

@@ -130,6 +130,7 @@
 #endif
 /***********************/
 
+#ifdef __linux__
 /*******Timespec Functions*******/
 /* Attempts to fix the values in a timespec structure so that there
  * are no combination of negative and positive values within a
@@ -204,5 +205,6 @@ struct timespec* timespec_add(struct timespec* a, struct timespec* b,
  * Returns the value returned from 'timespec_fix_values()'. */
 alib_error timespec_init(struct timespec* a, long sec, long nsec);
 /********************************/
+#endif
 
 #endif

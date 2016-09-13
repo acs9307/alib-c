@@ -26,15 +26,15 @@ void ListItem_mark_for_removal(ListItem* item)
  * ListItem's reference counter will not be decremented. */
 ListItemVal* ListItem_extract_value(ListItem* item)
 {
-	if(item)
-	{
-		ListItemVal* val = item->val;
-		item->val = NULL;
-		ListItem_mark_for_removal(item);
-		return(val);
-	}
-	else
-		return(NULL);
+       if(item)
+       {
+               ListItemVal* val = item->val;
+               item->val = NULL;
+               ListItem_mark_for_removal(item);
+               return(val);
+       }
+       else
+               return(NULL);
 }
 
 /*******Lifecycle*******/

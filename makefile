@@ -13,12 +13,12 @@ alibc:
 	gcc -c BinaryBuffer.c
 	gcc -c ClientListener.c
 	gcc -c ComDataCheck.c
-	gcc -c CurlObject.c
+#	gcc -c CurlObject.c
 	gcc -c DList.c
 	gcc -c DListItem.c
 	gcc -c EpollPack.c
 	gcc -c ErrorLogger.c
-	gcc -c EventServer.c
+#	gcc -c EventServer.c
 	gcc -c FdClient.c
 	gcc -c FdServer.c
 	gcc -c ListHistory.c

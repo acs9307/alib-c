@@ -1,7 +1,4 @@
 #include "alib_types.h"
-#include "alib_string.h"
-
-#include <ctype.h>
 
 /*******Structs*******/
 	/* Wrapper Package */
@@ -18,7 +15,7 @@
 wrapper_package* new_wrapper_package(void* parent, void* data,
 		alib_free_value free_data_cb)
 {
-	wrapper_package* package = malloc(sizeof(wrapper_package));
+	wrapper_package* package = (wrapper_package*)malloc(sizeof(wrapper_package));
 	if(!package)return(NULL);
 
 	package->parent = parent;
@@ -87,20 +84,26 @@ char is_whitespace(char c)
  */
 char is_int(const char* str)
 {
+	char r_val = 0;
+
 	//Skip front end whitespaces
 	while(is_whitespace(*str))
 		++str;
 
-	do
+	//Continue till end of string or a whitespace is hit
+	while(*str != '\0' && !is_whitespace(*str))
 	{
 		//Non-integer value, return false.
 		if(*str < '0' || *str > '9')
 			return(0);
 		else
+		{
+			r_val = 1;
 			++str;
-	}while(*str != '\0' && !is_whitespace(*str));
+		}
+	}
 
-	return(1);
+	return(r_val);
 }
 /* Returns true if the string is a valid integer.
  *

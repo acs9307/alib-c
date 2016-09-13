@@ -16,13 +16,13 @@ static alib_error add_event(TimerEventHandler* handler, TimerEvent* event, DList
 	if(!handler || !event)return(ALIB_BAD_ARG);
 
 	TimerEvent* it_event;
-	const DListItem* it;
+	DListItem* it;
 
 	/* Ensure we have an item to insert. */
 	if(!itm)
 		itm = newDListItem(event, (alib_free_value)freeTimerEvent, NULL);
 
-	it = DList_get(handler->list, 0);
+	it = (DListItem*)DList_get(handler->list, 0);
 	if(!it)
 	{	/* Nothing exists in the list, just add the event. */
 		return(DList_push_back(handler->list, itm));
@@ -87,7 +87,7 @@ static void remove_event(TimerEventHandler* handler, TimerEvent* event)
 static void extract_event(TimerEventHandler* handler, TimerEvent* event)
 {
 	DListItem* itm = DList_pull_out(handler->list,
-			DListItem_index(DList_get_by_value(handler->list, event)));
+			DListItem_index((DListItem*)DList_get_by_value(handler->list, event)));
 	ListItemVal* val = ListItem_extract_value((ListItem*)itm);
 	val->value = NULL;
 	delDListItem(&itm);
@@ -98,7 +98,7 @@ static void sort_events(TimerEventHandler* handler)
 {
 	if(!handler)return;
 
-	const DListItem* listIt = DList_get_begin(handler->list);
+	DListItem* listIt = (DListItem*)DList_get_begin(handler->list);
 	TimerEvent** arrayIt, **arrayEnd;
 	size_t arrayLen = DList_get_count(handler->list);
 	TimerEvent** eventArray = (TimerEvent**)malloc(sizeof(TimerEvent*) * arrayLen);
@@ -223,7 +223,7 @@ f_return:
 /* Starts the TimerEventHandler on a separate thread. */
 alib_error TimerEventHandler_start(TimerEventHandler* handler)
 {
-	const DListItem* it;
+	DListItem* it;
 
 	if(!handler)return(ALIB_BAD_ARG);
 	if(handler->fp & THREAD_IS_RUNNING)
@@ -235,7 +235,7 @@ alib_error TimerEventHandler_start(TimerEventHandler* handler)
 		TimerEventHandler_stop(handler);
 
 	/* Restart all the timer events. */
-	for(it = DList_get(handler->list, 0); it; it = DListItem_get_next_item(it))
+	for(it = (DListItem*)DList_get(handler->list, 0); it; it = DListItem_get_next_item(it))
 		TimerEvent_begin((TimerEvent*)DListItem_get_value(it));
 
 	/* Start the thread. */

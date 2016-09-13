@@ -43,7 +43,7 @@ alib_error BinaryBuffer_hard_resize(BinaryBuffer* buff, size_t new_size)
 	/* Use realloc() to resize the memory. */
 	else
 	{
-		buff->buff = realloc(buff->buff, new_size);
+		buff->buff = (unsigned char*)realloc(buff->buff, new_size);
 		if(!buff->buff)
 			return(ALIB_MEM_ERR);
 
@@ -149,32 +149,33 @@ alib_error BinaryBuffer_append(BinaryBuffer* buff, const void* data, size_t data
  * a partial file will be read.
  *
  * Parameters:
- * 		buff: The buffer to append the file to.
- * 		file: The file to read from. */
+ *             buff: The buffer to append the file to.
+ *             file: The file to read from. */
 alib_error BinaryBuffer_append_file(BinaryBuffer* buff, FILE* file)
 {
-	if(!buff || !file)return(ALIB_BAD_ARG);
+       if(!buff || !file)return(ALIB_BAD_ARG);
 
-	long rval = ftell(file);
-	size_t fileLen;
+       long rval = ftell(file);
+       size_t fileLen;
 
-	if(fseek(file, 0, SEEK_END))
-		return(ALIB_FILE_ERR);
-	fileLen = ftell(file) - rval;
-	if(fseek(file, rval, SEEK_SET))
-		return(ALIB_FILE_ERR);
+       if(fseek(file, 0, SEEK_END))
+               return(ALIB_FILE_ERR);
+       fileLen = ftell(file) - rval;
+       if(fseek(file, rval, SEEK_SET))
+               return(ALIB_FILE_ERR);
 
-	/* Resize the buffer. */
-	if((rval = BinaryBuffer_expand_to_target(buff, buff->len + fileLen)))
-		return(rval);
+       /* Resize the buffer. */
+       if((rval = BinaryBuffer_expand_to_target(buff, buff->len + fileLen)))
+               return(rval);
 
-	rval = fread(buff->buff + buff->len, 1, fileLen, file);
-	if(rval < fileLen)
-		return(ALIB_FILE_READ_ERR);
+       rval = fread(buff->buff + buff->len, 1, fileLen, file);
+       if(rval < fileLen)
+               return(ALIB_FILE_READ_ERR);
 
-	buff->len += fileLen;
-	return(ALIB_OK);
+       buff->len += fileLen;
+       return(ALIB_OK);
 }
+
 /* Inserts a block of data into the BinaryBuffer at the specified index.
  *
  * Parameters:
@@ -204,7 +205,7 @@ alib_error BinaryBuffer_insert(BinaryBuffer* buff, size_t index, const void* dat
 
 	/* Copy the memory around. */
 	memcpy_back(buff->buff + index + data_len, buff->buff + index,
-			buff->len - index);
+			buff->len - (index + 1));
 	memcpy(buff->buff + index, data, data_len);
 	buff->len = new_len;
 
@@ -278,7 +279,7 @@ alib_error BinaryBuffer_remove(BinaryBuffer* buff, size_t begin, size_t end)
  * 		count: The size of 'to' in bytes. If larger than
  * 			the length of the actual 'to' buffer, then behavior
  * 			is undefined. */
-alib_error BinaryBuffer_copy(const BinaryBuffer* buff, void* to, size_t count)
+alib_error BinaryBuffer_copy(BinaryBuffer* buff, void* to, size_t count)
 {
 	if(!buff || !to)return(ALIB_BAD_ARG);
 
@@ -313,7 +314,7 @@ alib_error BinaryBuffer_copy_and_drain(BinaryBuffer* buff, void* to, size_t coun
  * 		to: The user defined buffer to copy data into.
  * 		count: The size of 'to' in bytes.  If larger than the
  * 			actual size of 'to', behavior is undefined. */
-alib_error BinaryBuffer_copy_block(const BinaryBuffer* buff, size_t begin, size_t end,
+alib_error BinaryBuffer_copy_block(BinaryBuffer* buff, size_t begin, size_t end,
 		void* to, size_t count)
 {
 	if(!buff)return(ALIB_BAD_ARG);
@@ -351,7 +352,7 @@ alib_error BinaryBuffer_copy_block_and_drain(BinaryBuffer* buff, size_t begin, s
 		void* to, size_t count)
 {
 	/* Copy. */
-	int err = BinaryBuffer_copy_block(buff, begin, end, to, count);
+	alib_error err = BinaryBuffer_copy_block(buff, begin, end, to, count);
 	if(err)return(err);
 
 	/* Find how many bytes we removed. */
@@ -395,7 +396,7 @@ void* BinaryBuffer_extract_buffer(BinaryBuffer* buff)
  * function.
  *
  * Assumes 'buff' and 'file' are not null. */
-size_t BinaryBuffer_write_to_file(const BinaryBuffer* buff, FILE* file)
+size_t BinaryBuffer_write_to_file(BinaryBuffer* buff, FILE* file)
 {
 	return(fwrite(buff->buff, 1, buff->len, file));
 }
@@ -445,28 +446,28 @@ alib_error BinaryBuffer_replace(BinaryBuffer* buff, size_t index, size_t old_len
  * READONLY - MODIFY AT YOUR OWN RISK.
  *
  * Assumes 'buff' is not null. */
-const void* BinaryBuffer_get_raw_buff(const BinaryBuffer* buff)
+const void* BinaryBuffer_get_raw_buff(BinaryBuffer* buff)
 {
 	return(buff->buff);
 }
 /* Returns the length of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_length(const BinaryBuffer* buff)
+size_t BinaryBuffer_get_length(BinaryBuffer* buff)
 {
 	return(buff->len);
 }
 /* Returns the capacity of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_capacity(const BinaryBuffer* buff)
+size_t BinaryBuffer_get_capacity(BinaryBuffer* buff)
 {
 	return(buff->capacity);
 }
 /* Returns the minimum capacity of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_min_capacity(const BinaryBuffer* buff)
+size_t BinaryBuffer_get_min_capacity(BinaryBuffer* buff)
 {
 	return(buff->min_cap);
 }
@@ -474,7 +475,7 @@ size_t BinaryBuffer_get_min_capacity(const BinaryBuffer* buff)
  * expand per iteration.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_max_expand_size(const BinaryBuffer* buff)
+size_t BinaryBuffer_get_max_expand_size(BinaryBuffer* buff)
 {
 	return(buff->max_expand);
 }
@@ -521,7 +522,7 @@ void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand)
 BinaryBuffer* newBinaryBuffer_ex(unsigned char* data, size_t data_len,
 		size_t start_cap, size_t min_cap, size_t max_expand)
 {
-	BinaryBuffer* buff = malloc(sizeof(BinaryBuffer));
+	BinaryBuffer* buff = (BinaryBuffer*)malloc(sizeof(BinaryBuffer));
 	if(!buff)return(NULL);
 
 	/* Check argument values. */
@@ -542,12 +543,12 @@ BinaryBuffer* newBinaryBuffer_ex(unsigned char* data, size_t data_len,
 	/* Allocate internal memory. */
 	if(start_cap)
 	{
-		if(!(buff->buff = malloc(start_cap)))
+		if(!(buff->buff = (unsigned char*)malloc(start_cap)))
 			delBinaryBuffer(&buff);
 	}
 	else
 		buff->buff = NULL;
-
+	
 	/* Fill buffer. */
 	if(data && data_len)
 		memcpy(buff->buff, data, data_len);

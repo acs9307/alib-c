@@ -63,9 +63,10 @@ alib_error BinaryBuffer_append(BinaryBuffer* buff, const void* data, size_t data
  * a partial file will be read.
  *
  * Parameters:
- * 		buff: The buffer to append the file to.
- * 		file: The file to read from. */
+ *             buff: The buffer to append the file to.
+ *             file: The file to read from. */
 alib_error BinaryBuffer_append_file(BinaryBuffer* buff, FILE* file);
+
 /* Inserts a block of data into the BinaryBuffer at the specified index.
  *
  * Parameters:
@@ -109,7 +110,7 @@ alib_error BinaryBuffer_remove(BinaryBuffer* buff, size_t begin, size_t end);
  * 		count: The size of 'to' in bytes. If larger than
  * 			the length of the actual 'to' buffer, then behavior
  * 			is undefined. */
-alib_error BinaryBuffer_copy(const BinaryBuffer* buff, void* to, size_t count);
+alib_error BinaryBuffer_copy(BinaryBuffer* buff, void* to, size_t count);
 /* Copies memory from the BinaryBuffer to a user defined buffer. The data
  * that is copied is then removed from the BinaryBuffer.
  *
@@ -130,7 +131,7 @@ alib_error BinaryBuffer_copy_and_drain(BinaryBuffer* buff, void* to, size_t coun
  * 		to: The user defined buffer to copy data into.
  * 		count: The size of 'to' in bytes.  If larger than the
  * 			actual size of 'to', behavior is undefined. */
-alib_error BinaryBuffer_copy_block(const BinaryBuffer* buff, size_t begin, size_t end,
+alib_error BinaryBuffer_copy_block(BinaryBuffer* buff, size_t begin, size_t end,
 		void* to, size_t count);
 /* Same as BinaryBuffer_copy_block() but the the memory that is copied will be removed from
  * the buffer.
@@ -165,7 +166,7 @@ void* BinaryBuffer_extract_buffer(BinaryBuffer* buff);
  * function.
  *
  * Assumes 'buff' and 'file' are not null. */
-size_t BinaryBuffer_write_to_file(const BinaryBuffer* buff, FILE* file);
+size_t BinaryBuffer_write_to_file(BinaryBuffer* buff, FILE* file);
 
 /* Replaces a section of data in the buffer with new data.
  *
@@ -185,24 +186,24 @@ alib_error BinaryBuffer_replace(BinaryBuffer* buff, size_t index, size_t old_len
  * READONLY - MODIFY AT YOUR OWN RISK.
  *
  * Assumes 'buff' is not null. */
-const void* BinaryBuffer_get_raw_buff(const BinaryBuffer* buff);
+const void* BinaryBuffer_get_raw_buff(BinaryBuffer* buff);
 /* Returns the length of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_length(const BinaryBuffer* buff);
+size_t BinaryBuffer_get_length(BinaryBuffer* buff);
 /* Returns the capacity of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_capacity(const BinaryBuffer* buff);
+size_t BinaryBuffer_get_capacity(BinaryBuffer* buff);
 /* Returns the minimum capacity of the internal buffer in bytes.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_min_capacity(const BinaryBuffer* buff);
+size_t BinaryBuffer_get_min_capacity(BinaryBuffer* buff);
 /* Returns the maximum number of bytes the internal buffer may
  * expand per iteration.
  *
  * Assumes 'buff' is not null. */
-size_t BinaryBuffer_get_max_expand_size(const BinaryBuffer* buff);
+size_t BinaryBuffer_get_max_expand_size(BinaryBuffer* buff);
 	/***********/
 
 	/* Setters */
@@ -212,7 +213,7 @@ size_t BinaryBuffer_get_max_expand_size(const BinaryBuffer* buff);
 void BinaryBuffer_set_min_capacity(BinaryBuffer* buff, size_t min_cap);
 /* Sets the maximum number of bytes the internal buffer may expand by.
  * If 'max_expand' is set to zero, the buffer's value will be set to
- * ULONG_MAX.
+ * SIZE_MAX.
  *
  * Assumes 'buff' is not null. */
 void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand);
@@ -232,7 +233,7 @@ void BinaryBuffer_set_max_expand_size(BinaryBuffer* buff, size_t max_expand);
  * 			for the buffer.
  * 		max_expand: (OPTIONA) The number of bytes that the buffer may expand
  * 			by per iteration.  If set to zero, then the maximum expansion will
- * 			be set to ULONG_MAX.
+ * 			be set to SIZE_MAX.
  */
 BinaryBuffer* newBinaryBuffer_ex(unsigned char* data, size_t data_len,
 		size_t start_cap, size_t min_cap, size_t max_expand);

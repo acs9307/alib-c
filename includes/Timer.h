@@ -65,7 +65,7 @@ char Timer_get_rung_state(Timer* t);
  * Parameters:
  * 		t: The timer to check.
  * 		rTime: (OPTIONAL) The remaining time.
- * 		oTime: (OPTIOINAL) The overflow time.
+ * 		oTime: (OPTIONAL) The overflow time.
  *
  * Returns:
  * 		alib_error: If ALIB_UNKNOWN_ERR is returned, then something occurred where
