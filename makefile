@@ -51,6 +51,7 @@ alibc:
 	rm -r *.c *.h ancillary/
 
 install:
+	mkdir -p /usr/local/include/alib-c/
 	rm -f /user/local/inlcude/alib-c/*.h
 	cp ./includes/*.h /usr/local/include/alib-c/
 	cp libalibc.a /usr/local/lib/
