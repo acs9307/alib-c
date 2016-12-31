@@ -1,4 +1,4 @@
-#include "alib_string.h"
+#include "includes/alib_string.h"
 
 /* Copies a string from 'from' to 'to' by iterating backwards.  Behaves
  * similarly to strcpy() except that copying is done backwards so that

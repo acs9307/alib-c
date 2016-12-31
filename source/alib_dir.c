@@ -1,4 +1,4 @@
-#include "alib_dir.h"
+#include "includes/alib_dir.h"
 
 /* Points to a dynamically allocated string that represents the file
  * location of the currently running executable.

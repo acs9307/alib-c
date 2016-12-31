@@ -1,8 +1,4 @@
-#if 1
-#include "alib_proc.h"
-#else
-#include <alib-c/alib_proc.h>
-#endif
+#include "includes/alib_proc.h"
 
 /* Returns the PIDs of applications with a name matching 'procName'.
  *

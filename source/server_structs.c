@@ -1,4 +1,4 @@
-#include "server_structs.h"
+#include "includes/server_structs.h"
 
 
 /*******Client Package*******/

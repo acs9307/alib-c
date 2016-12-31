@@ -1,6 +1,5 @@
-#include "zip.h"
-
-#include "BinaryBuffer_private.h"
+#include "includes/zip.h"
+#include "includes/BinaryBuffer_private.h"
 
 /* Initializes a 'z_stream' for deflation. */
 int init_deflate_stream(z_stream* strm, int level)

@@ -1,4 +1,4 @@
-#include "TcpClient_private.h"
+#include "includes/TcpClient_private.h"
 
 /*******Private Functions*******/
 /* Calls receive on the client's socket until either an error happens

@@ -1,6 +1,6 @@
-#include "StringObject.h"
-#include "alib_error.h"
-#include "alib_string.h"
+#include "includes/StringObject.h"
+#include "includes/alib_error.h"
+#include "includes/alib_string.h"
 
 #include <stdio.h>
 #include <string.h>

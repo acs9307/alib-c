@@ -4,6 +4,23 @@ Never assume an object is threadsafe.  If in doubt, check the associated header 
 Some objects may state that they are thread safe, however the deletion function may not be thread
 safe, there is no way to free an object in a thread safe manner. 
 
+Making:
+	To make the project follow the commands below...
+		Linux:
+			make
+			sudo make install
+
+			...or simply
+			make all
+		
+		Arduino:
+			make arduino
+			
+Notes for Modifying Files for Arduino:
+	When modifying files so for Arduino, it is suggested to modify the files in the main directory
+	and then call 'sh arduino_prep_commit.sh' before committing.  This will ensure your changes will 
+	be shown in git as all source files in the main directory are ignored.
+
 Conventions:	
 	For a structure to be considered a class, it must follow the class naming convention as well 
 	as have	a related 'new()' and 'del()' function which can dynamically allocate memory for

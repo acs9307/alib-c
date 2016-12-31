@@ -1,6 +1,5 @@
 alibc:
 	cp -r source/* .
-	cp -r includes/* .
 	gcc -c alib_cb_funcs.c
 	gcc -c alib_dir.c
 	gcc -c alib_file.c
@@ -47,8 +46,7 @@ alibc:
 	gcc -c ancillary/fd_recv.c
 	gcc -c ancillary/fd_send.c
 	ar -rc libalibc.a *.o	
-	rm *.o
-	rm -r *.c *.h ancillary/
+	rm -r *.o *.c ancillary/
 
 install:
 	mkdir -p /usr/local/include/alib-c/
@@ -59,3 +57,16 @@ install:
 all:
 	make alibc
 	make install
+	
+arduino:
+	cp ./source/alib_cb_funcs.c .
+	cp ./source/alib_time.c .
+	cp ./source/alib_types.c .
+	cp ./source/DList.c .
+	cp ./source/DListItem.c .
+	cp ./source/Endianess.c .
+	cp ./source/ListItem.c .
+	cp ./source/ListItemVal.c .
+	
+clean:
+	rm -rf *.o *.c ancillary/ *.a
