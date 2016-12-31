@@ -1,0 +1,5 @@
+There are several libraries that are linked to during compilation.  These are optional, however to turn them off requires you modify the make file so that it does not compile the source linking to said libraries.
+
+Below is the list of libraries linked to and where you can find them.
+json-c: https://github.com/json-c/json-c
+zlib: https://github.com/madler/zlib
