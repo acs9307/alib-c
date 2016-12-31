@@ -1,3 +1,11 @@
+----version 1.5.1----
+Modified the source files so they now include directly from the includes folder, thus eliminating the need to copy header files to main directory.
+Source files still have to be copied to the main directory for compilation.  This is by design so that we don't have to have different source files for Arduino (source files won't be found unless they are in the main directory :S).
+
+Added limited support for Arduino environment.  Only a small subset of source files are usable due to missing libraries in Arduino.  Later I will try make more code compatible with Arduino.
+
+No behavior changes have been made.
+
 ----version 1.5.0----
 Many changes have been made.  Have been slowly working on this library over time and forgot to keep up with the git as I couldn't keep the files in the same folder format as this git project due to environmental constraints, my apologies.
 

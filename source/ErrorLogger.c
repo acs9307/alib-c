@@ -1,4 +1,4 @@
-#include "ErrorLogger_private.h"
+#include "includes/ErrorLogger_private.h"
 
 /*******Callback Functions*******/
 /* Truncates the size of the file by at least half.  Only complete

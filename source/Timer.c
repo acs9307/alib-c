@@ -1,4 +1,4 @@
-#include "Timer_private.h"
+#include "includes/Timer_private.h"
 
 /*******Public Functions*******/
 /* Resets the timer and sets the end time of the timer. */

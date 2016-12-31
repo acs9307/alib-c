@@ -41,7 +41,7 @@
 # include <sys/param.h> /* FreeBSD sucks */
 #endif
 
-#include "../ancillary.h"
+#include "../includes/ancillary.h"
 
 int
 ancil_send_fds_with_buffer(int sock, const int *fds, unsigned n_fds, void *buffer)

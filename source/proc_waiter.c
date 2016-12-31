@@ -1,10 +1,5 @@
-#if 1
-#include "ArrayList_protected.h"
-#include "proc_waiter.h"
-#else
-#include <alib-c/ArrayList_protected.h>
-#include <alib-c/proc_waiter.h>
-#endif
+#include "includes/ArrayList_protected.h"
+#include "includes/proc_waiter.h"
 
 
 /*******Private Globals*******/

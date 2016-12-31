@@ -1,5 +1,5 @@
-#include "DList_private.h"
-#include "DListItem_private.h"
+#include "includes/DList_private.h"
+#include "includes/DListItem_private.h"
 
 /*******Public Functions*******/
 /* Adds a DListItem object to the end of the list.

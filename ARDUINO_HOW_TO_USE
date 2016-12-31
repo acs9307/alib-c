@@ -1,0 +1,2 @@
+To use the library in the arduino environment, simply include "Arduino_alib-c.h" to your 
+code.

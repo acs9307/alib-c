@@ -1,8 +1,4 @@
-#if 1
-#include "ArrayList_private.h"
-#else
-#include <alib-c/ArrayList_private.h>
-#endif
+#include "includes/ArrayList_private.h"
 
 /*******PROTECTED FUNCTIONS*******/
 /* Protected function used to remove items from the list pointer then
