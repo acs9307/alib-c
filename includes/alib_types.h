@@ -9,7 +9,7 @@
 /*******SIMPLE TYPES*******/
 	/* Boolean */
 #ifndef bool
-#define bool unsigned char
+typedef unsigned char bool;
 #endif
 
 #ifndef true
@@ -40,7 +40,7 @@
 	/***********/
 
 #ifndef byte
-#define byte unsigned char
+typedef unsigned char byte;
 #endif
 /**************************/
 

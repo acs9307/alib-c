@@ -4,7 +4,11 @@ Source files still have to be copied to the main directory for compilation.  Thi
 
 Added limited support for Arduino environment.  Only a small subset of source files are usable due to missing libraries in Arduino.  Later I will try make more code compatible with Arduino.
 
-No behavior changes have been made.
+alib_string:
+	Changed 'itoa()', 'uitoa()', and 'ftoa()' to have an '_alloc' at the end of the name because 'stdlib.h' evidently already defines an 'itoa()' that I didn't know about previously.
+
+alib_types:
+	Changed 'bool' and 'byte' to be typedefs instead of defines.
 
 ----version 1.5.0----
 Many changes have been made.  Have been slowly working on this library over time and forgot to keep up with the git as I couldn't keep the files in the same folder format as this git project due to environmental constraints, my apologies.

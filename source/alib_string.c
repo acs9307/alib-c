@@ -243,7 +243,7 @@ void* memcpy_safe(void* to, const void* from, size_t count)
 /* Creates a new character string representation of the given integer
  * value.  The returned string is dynamically allocated and must be freed
  * by the caller. */
-char* itoa(long long num)
+char* itoa_alloc(long long num)
 {
        char* str = malloc(LLONG_MAX_CHAR_LEN + 1);
        if(!str)return(NULL);
@@ -255,7 +255,7 @@ char* itoa(long long num)
 /* Creates a new character string representation of the given unsigned integer
  * value.  The returned string is dynamically allocated and must be freed
  * by the caller. */
-char* uitoa(unsigned long long num)
+char* uitoa_alloc(unsigned long long num)
 {
 	char* str = (char*)malloc(ULLONG_MAX_CHAR_LEN + 1);
 	if(!str)return(NULL);
@@ -271,7 +271,7 @@ char* uitoa(unsigned long long num)
 /* Creates a new character string representation of the given double
  * value.  The returned string is dynamically allocated and must be freed
  * by the caller. */
-char* ftoa(double num)
+char* ftoa_alloc(double num)
 {
 	char* str = (char*)malloc(DOUBLE_MAX_CHAR_LEN + 1);
 	if(!str)return(NULL);
