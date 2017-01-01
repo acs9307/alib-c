@@ -136,15 +136,15 @@ void* memcpy_safe(void* to, const void* from, size_t count);
 /* Creates a new character string representation of the given integer
  * value.  The returned string is dynamically allocated and must be freed
  * by the caller. */
-char* itoa(long long num);
+char* itoa_alloc(long long num);
 /* Creates a new character string representation of the given unsigned integer
  * value.  The returned string is dynamically allocated and must be freed
  * by the caller. */
-char* uitoa(unsigned long long num);
+char* uitoa_alloc(unsigned long long num);
 /* Creates a new character string representation of the given double
  * value.  The returned string is dynamically allocated and must be freed
  * by the caller. */
-char* ftoa(double num);
+char* ftoa_alloc(double num);
 
 /* Finds the next whitespace character in the string. A white space
  * is considered a space, tab, carriage return, or a new line character.

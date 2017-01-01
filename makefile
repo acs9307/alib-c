@@ -60,6 +60,7 @@ all:
 	
 arduino:
 	cp ./source/alib_cb_funcs.c .
+	cp ./source/alib_string.c .
 	cp ./source/alib_time.c .
 	cp ./source/alib_types.c .
 	cp ./source/DList.c .

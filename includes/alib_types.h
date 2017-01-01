@@ -8,8 +8,14 @@
 
 /*******SIMPLE TYPES*******/
 	/* Boolean */
+#ifndef __cplusplus
 #ifndef bool
-#define bool unsigned char
+typedef unsigned char bool;
+#endif
+
+#ifndef byte
+typedef unsigned char byte;
+#endif
 #endif
 
 #ifndef true
@@ -38,10 +44,6 @@
 #define FALSE_STRING_LEN 5
 #endif
 	/***********/
-
-#ifndef byte
-#define byte unsigned char
-#endif
 /**************************/
 
 /*******ENUMERATIONS*******/
