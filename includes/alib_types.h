@@ -11,11 +11,14 @@
 #ifndef __cplusplus
 #ifndef bool
 typedef unsigned char bool;
+<<<<<<< HEAD
 #endif
 
 #ifndef byte
 typedef unsigned char byte;
 #endif
+=======
+>>>>>>> 3166dc284888798e1aa43e75ff181a44ef25ca50
 #endif
 
 #ifndef true
@@ -44,6 +47,13 @@ typedef unsigned char byte;
 #define FALSE_STRING_LEN 5
 #endif
 	/***********/
+<<<<<<< HEAD
+=======
+
+#ifndef byte
+typedef unsigned char byte;
+#endif
+>>>>>>> 3166dc284888798e1aa43e75ff181a44ef25ca50
 /**************************/
 
 /*******ENUMERATIONS*******/
