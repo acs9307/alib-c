@@ -32,3 +32,4 @@
 *.dSYM/
 
 *.c
+!source/*.c
