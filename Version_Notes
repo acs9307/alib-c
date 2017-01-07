@@ -1,3 +1,9 @@
+----Version 1.5.2----
+Fixed '.gitignore' so changes in sources directory would not be ignored, only source files in the main directory should be ignored.
+
+alib_math:
+	NEW!
+
 ----version 1.5.1----
 Modified the source files so they now include directly from the includes folder, thus eliminating the need to copy header files to main directory.
 Source files still have to be copied to the main directory for compilation.  This is by design so that we don't have to have different source files for Arduino (source files won't be found unless they are in the main directory :S).

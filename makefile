@@ -3,6 +3,7 @@ alibc:
 	gcc -c alib_cb_funcs.c
 	gcc -c alib_dir.c
 	gcc -c alib_file.c
+	gcc -c alib_math.c
 	gcc -c alib_proc.c
 	gcc -c alib_sockets.c
 	gcc -c alib_string.c
@@ -50,7 +51,7 @@ alibc:
 
 install:
 	mkdir -p /usr/local/include/alib-c/
-	rm -f /user/local/inlcude/alib-c/*.h
+	rm -f /usr/local/inlcude/alib-c/*.h
 	cp ./includes/*.h /usr/local/include/alib-c/
 	cp libalibc.a /usr/local/lib/
 
