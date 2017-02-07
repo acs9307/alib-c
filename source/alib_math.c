@@ -3,6 +3,7 @@
 /* Returns 1 if the value is prime, 0 otherwise. */
 char isPrime(int64_t x)
 {
+	int64_t i;
 	int64_t halfX = (x / 2);
 	if (halfX < 0)
 	{
@@ -10,7 +11,7 @@ char isPrime(int64_t x)
 	}
 	halfX += 1;
 
-	for (int64_t i = 2; i < halfX; ++i)
+	for (i = 2; i < halfX; ++i)
 	{
 		if (x % i == 0)
 			return(0);

@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 /* Returns 1 if the value is prime, 0 otherwise. */
-char isPrime(uint64_t x);
+char isPrime(int64_t x);
 
 #endif
