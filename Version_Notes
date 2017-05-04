@@ -1,3 +1,7 @@
+----Version 1.5.3----
+StrParser:
+	NEW!
+
 ----Version 1.5.2----
 Fixed '.gitignore' so changes in sources directory would not be ignored, only source files in the main directory should be ignored.
 
