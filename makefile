@@ -32,6 +32,8 @@ alibc:
 	gcc -c signal_handler.c
 	gcc -c String.c
 	gcc -c StringObject.c
+	gcc -c StrParser.c
+	gcc -c StrRef.c
 	gcc -c TcpClient.c
 	gcc -c tcp_functions.c
 	gcc -c TcpServer.c

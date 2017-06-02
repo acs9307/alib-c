@@ -1,4 +1,4 @@
-#include "StrParser.h"
+#include "includes/StrParser.h"
 
 /* Public Functions */
 /* Initializes an StrParser.  This MUST BE CALLED before utilizing a parser. */
