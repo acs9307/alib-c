@@ -64,4 +64,6 @@ typedef enum alib_error
 	ALIB_OK = 0
 }alib_error;
 
+#define PRINT_ERR(formatString, ...) printf("("__FILE__":%d) "formatString, __LINE__, __VA_ARGS__)
+
 #endif
