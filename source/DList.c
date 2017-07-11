@@ -481,7 +481,13 @@ DListItem* DList_pull_out_count(DList* list, size_t index, size_t count)
 /* Returns the number of items in the list.
  *
  * Assumes 'list' is not null. */
-size_t DList_get_count(const DList* list){return(list->count);}
+size_t DList_get_count(const DList* list)
+{
+	if(list)
+		return(list->count);
+	else
+		return(0);
+}
 
 /* Returns the item at the given index.
  *
@@ -509,7 +515,10 @@ const DListItem* DList_get_begin(const DList* list)
 /* Returns the last item in the list. */
 const DListItem* DList_get_end(const DList* list)
 {
-	return(list->end);
+	if(list)
+		return(list->end);
+	else
+		return(NULL);
 }
 
 /* Returns the first item that has a value whose pointer points to the same
@@ -520,7 +529,10 @@ const DListItem* DList_get_end(const DList* list)
  * 		DListItem*: A pointer to the item found. */
 ListItem* DList_get_by_value(DList* list, void* val)
 {
-	return((ListItem*)DListItem_get_by_value(list->begin, val));
+	if(list)
+		return((ListItem*)DListItem_get_by_value(list->begin, val));
+	else
+		return(NULL);
 }
 	/***********/
 
