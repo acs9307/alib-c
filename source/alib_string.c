@@ -450,6 +450,52 @@ char str_match(const char* str1, size_t str1_len,
 		return(1);
 }
 
+/* Compares strings (ignoring case), byte for byte, and ensures that both
+ * the characters and string length match. This differs from
+ * 'strncmp()' as this will not stop checking after the first null
+ * terminator.
+ *
+ * Parameters:
+ * 		str1: (REQUIRED)The first string for comparison
+ * 		str1_len: (OPTIONAL)The length of the first string in bytes.
+ * 			If 0, the value will be calculated with strlen().
+ * 		str2: (REQUIRED) The second string for comparison.
+ * 		str2_len: (OPTIONAL) The length of the second string
+ * 			in bytes.
+ *
+ * Returns:
+ * 		0: Strings match exactly.
+ * 		>0: The first string's value is larger than the second.
+ * 		<0: The second string's value is larger than the first. */
+char str_match_no_case(const char* str1, size_t str1_len,
+		const char* str2, size_t str2_len)
+{
+	/* Ensure we don't have a null pointer. */
+	if(!str1 || !str2)
+	{
+		if(str1 == str2)
+			return(0);
+		else if(str1)
+			return(1);
+		else
+			return(-1);
+	}
+
+	/* Find the string lengths. */
+	if(str1_len == 0)
+		str1_len = strlen(str1);
+	if(str2_len == 0)
+		str2_len = strlen(str2);
+
+	/* Compare the string lengths. */
+	if(str1_len < str2_len)
+		return(-1);
+	else if(str1_len > str2_len)
+		return(1);
+
+	return(strncasecmp(str1, str2, str1_len));
+}
+
 /* Converts all the characters in a null terminated string to their lower equivalent.
  *
  * If 'str' is not null terminated, behavior is undefined.

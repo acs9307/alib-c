@@ -3,25 +3,12 @@
 
 #include "alib_error.h"
 #include "alib_types.h"
+#include "StrRef.h"
 
 /* Structs */
 /* String parser is designed to be a base interface for parsers each string may need to be
  * parsed differently. */
-typedef struct StrParser
-{
-	/* Pointer to the entire string being parsed. */
-	const char* strBegin;
-	/* Pointer to one past the end of the string being parsed. */
-	const char* strEnd;
-
-	/* Pointer to the beginning of an iterator segment of the string being parsed.
-	 * If NULL, then the iterator has not been initialized yet. */
-	const char* itBegin;
-	/* Pointer to one past the end of the iterator segment of the string being parsed.
-	 * If this is pointing to the beginning of the string, then the iterator has not
-	 * been initialized yet. */
-	const char* itEnd;
-}StrParser;
+typedef struct StrParser StrParser;
 /***********/
 
 /* Public Functions */
@@ -56,7 +43,6 @@ size_t StrParser_get_it_len(StrParser* parser);
 
 /*********************/
 
-/* TODO: Move to C file. */
 /* TODO: Add dynamic constructors. */
 
 #endif

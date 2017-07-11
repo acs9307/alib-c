@@ -3,14 +3,14 @@
 /* Public Functions */
 	/* Getters */
 /* Returns the beginning of the referenced string. */
-const char* StrRef_get_begin(StrRef* ref)
+const char* StrRef_get_begin(const StrRef* ref)
 {
 	if(!ref)return(NULL);
 
 	return(ref->begin);
 }
 /* Returns the end of the referenced string. */
-const char* StrRef_get_end(StrRef* ref)
+const char* StrRef_get_end(const StrRef* ref)
 {
 	if(!ref)return(NULL);
 
@@ -18,7 +18,7 @@ const char* StrRef_get_end(StrRef* ref)
 }
 /* Returns the length of the referenced string.
  * Note: This may differ from 'strlen()' if we are referencing only a partial string. */
-size_t StrRef_len(StrRef* ref)
+size_t StrRef_len(const StrRef* ref)
 {
 	if(!ref)return(0);
 
@@ -49,6 +49,14 @@ StrRef* newStrRef(const char* begin, const char* end)
 		delStrRef(&ref);
 
 f_return:
+	return(ref);
+}
+
+/* Helper function that returns an initialized StrRef non-dynamic StrRef object. */
+StrRef StrRef_from_string(const char* begin, const char* end)
+{
+	StrRef ref;
+	StrRef_init(&ref, begin, end);
 	return(ref);
 }
 	/****************/

@@ -1,4 +1,4 @@
-#include "includes/StrParser.h"
+#include "includes/StrParser_private.h"
 
 /* Public Functions */
 /* Initializes an StrParser.  This MUST BE CALLED before utilizing a parser. */
@@ -6,8 +6,8 @@ alib_error StrParser_init(StrParser* parser, const char* str, const char* strEnd
 {
 	if(!parser || !str || !strEnd || str > strEnd)return(ALIB_BAD_ARG);
 
-	parser->strBegin = str;
-	parser->strEnd = strEnd;
+	parser->str.begin = str;
+	parser->str.end = strEnd;
 
 	return(StrParser_reset(parser));
 }
@@ -22,8 +22,8 @@ alib_error StrParser_reset(StrParser* parser)
 {
 	if(!parser)return(ALIB_BAD_ARG);
 
-	parser->itBegin = NULL;
-	parser->itEnd = parser->strBegin;
+	parser->it.begin = NULL;
+	parser->it.end = parser->str.begin;
 
 	return(ALIB_OK);
 }
@@ -43,6 +43,8 @@ alib_error StrParser_trim(StrParser* parser, const char* chars, size_t count)
 	const char* cit, *citEnd;
 
 	cit = chars;
+
+	/* Determine the last character in the 'chars' list. */
 	if(!count)
 	{
 		citEnd = chars;
@@ -52,29 +54,31 @@ alib_error StrParser_trim(StrParser* parser, const char* chars, size_t count)
 		citEnd = chars + count;
 
 	/* Trim beginning of string. */
-	for(strIt = parser->strBegin; strIt < parser->strEnd; ++strIt)
+	for(strIt = parser->str.begin; strIt < parser->str.end; ++strIt)
 	{
-		for(cit = chars; *cit != *strIt; ++cit);
+		for(cit = chars; *cit != *strIt && cit != citEnd; ++cit);
 
 		/* We will break if there were no characters found that matched to trim. */
-		if(cit == citEnd)
+		if(cit >= citEnd)
 			break;
 	}
-	parser->strBegin = strIt;
+	parser->str.begin = strIt;
 
 	/* Trim end of string. */
-	for(strIt = parser->strEnd - 1; strIt > parser->strBegin; --strIt)
+	for(strIt = parser->str.end - 1; strIt > parser->str.begin; --strIt)
 	{
-		for(cit = chars; *cit != *strIt; ++cit);
+		for(cit = chars; *cit != *strIt && cit != citEnd; ++cit);
 
 		/* We will break if there were no characters found that matched to trim. */
-		if(cit == citEnd)
+		if(cit >= citEnd)
 			break;
 	}
-	parser->strEnd = strIt + 1;	/* strEnd should point to one past end of string. */
+	parser->str.end = strIt + 1;	/* strEnd should point to one past end of string. */
 
-	if(parser->itBegin < parser->strBegin)
+	if(parser->it.begin < parser->str.begin)
 		StrParser_reset(parser);
+	if(parser->it.end > parser->str.end)
+		parser->it.end = parser->str.end;
 
 	return(ALIB_OK);
 }
@@ -95,15 +99,15 @@ size_t StrParser_get_str_len(StrParser* parser)
 	if(!parser)
 		return(0);
 	else
-		return(parser->strEnd - parser->strBegin);
+		return(parser->str.end - parser->str.begin);
 }
 /* Returns the length of iterator being parsed. */
 size_t StrParser_get_it_len(StrParser* parser)
 {
-	if(!parser || !parser->itBegin)
+	if(!parser || !parser->it.begin)
 		return(0);
 	else
-		return(parser->itEnd - parser->itBegin);
+		return(parser->it.end - parser->it.begin);
 }
 	/***********/
 /********************/

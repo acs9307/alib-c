@@ -12,12 +12,12 @@ typedef struct StrRef StrRef;
 /* Public Functions */
 	/* Getters */
 /* Returns the beginning of the referenced string. */
-const char* StrRef_get_begin(StrRef* ref);
+const char* StrRef_get_begin(const StrRef* ref);
 /* Returns the end of the referenced string. */
-const char* StrRef_get_end(StrRef* ref);
+const char* StrRef_get_end(const StrRef* ref);
 /* Returns the length of the referenced string.
  * Note: This may differ from 'strlen()' if we are referencing only a partial string. */
-size_t StrRef_len(StrRef* ref);
+size_t StrRef_len(const StrRef* ref);
 	/***********/
 
 	/* Constructors */
@@ -25,6 +25,9 @@ size_t StrRef_len(StrRef* ref);
 alib_error StrRef_init(StrRef* ref, const char* begin, const char* end);
 /* Allocates a new StrRef object. */
 StrRef* newStrRef(const char* begin, const char* end);
+
+/* Helper function that returns an initialized StrRef non-dynamic StrRef object. */
+StrRef StrRef_from_string(const char* begin, const char* end);
 	/****************/
 
 	/* Destructors */
