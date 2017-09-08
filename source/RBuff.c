@@ -98,16 +98,23 @@ size_t RBuff_get_remaining(RBuff* rbuff)
 }
 	/***********/
 
-/* Increments the end iterator by one. */
-void RBuff_increment_it(RBuff* rbuff)
+/* Increments the end iterator by 'count'. */
+void RBuff_increment_it(RBuff* rbuff, size_t count)
 {
-	if(!rbuff)return;
+	if(!rbuff || !count)return;
 
-	_incrementIt(rbuff, &rbuff->itEnd, 1);
-	if(rbuff->itEnd == rbuff->itBegin)
-		_incrementIt(rbuff, &rbuff->itBegin, 1);
+	size_t buffSize = RBuff_get_size(rbuff);
+
+	if(rbuff->count + count > buffSize)
+	{
+		_incrementIt(rbuff, &rbuff->itBegin, count);
+		rbuff->count = buffSize;
+	}
 	else
-		++rbuff->count;
+		rbuff->count += count;
+
+	/* Increment end afterwards as it may be pointing to the*/
+	_incrementIt(rbuff, &rbuff->itEnd, count);
 }
 
 /* Copies the number of elements into the given buffer.
@@ -228,8 +235,16 @@ alib_error RBuff_pushback_byte(RBuff* rbuff, uint8_t byte)
 	if(!rbuff)return(ALIB_BAD_ARG);
 
 	*(uint8_t*)rbuff->itEnd = byte;
-	RBuff_increment_it(rbuff);
+	RBuff_increment_it(rbuff, 1);
 	return(ALIB_OK);
+}
+
+/* Resets the RBuff to its initialized state. */
+void RBuff_reset(RBuff* rbuff)
+{
+	if(!rbuff)return;
+
+	RBuff_init(rbuff, rbuff->buff, RBuff_get_size(rbuff), rbuff->flags);
 }
 /********************/
 

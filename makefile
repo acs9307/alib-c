@@ -29,6 +29,7 @@ alibc:
 	gcc -c MutexObject.c
 	gcc -c proc_waiter.c
 	gcc -c RBuff.c
+	gcc -c RBuffIt.c
 	gcc -c server_structs.c
 	gcc -c signal_handler.c
 	gcc -c String.c

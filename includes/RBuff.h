@@ -28,8 +28,8 @@ size_t RBuff_get_count(RBuff* rbuff);
 size_t RBuff_get_remaining(RBuff* rbuff);
 	/***********/
 
-/* Increments the end iterator by one. */
-void RBuff_increment_it(RBuff* rbuff);
+/* Increments the end iterator by 'count'. */
+void RBuff_increment_it(RBuff* rbuff, size_t count);
 
 /* Copies the number of elements into the given buffer.
  *
@@ -49,6 +49,9 @@ int16_t RBuff_popoff_byte(RBuff* rbuff);
 size_t RBuff_pushback(RBuff* rbuff, const void* buff, size_t count);
 /* Pushes a byte onto the buffer. */
 alib_error RBuff_pushback_byte(RBuff* rbuff, uint8_t byte);
+
+/* Resets the RBuff to its initialized state. */
+void RBuff_reset(RBuff* rbuff);
 /********************/
 
 /* Constructors */
