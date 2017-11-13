@@ -12,7 +12,10 @@
 typedef enum RBuffFlag
 {
 	rbuffNoFlag = 0,
-	rbuffOwnedBuff = 1,	/* If raised, the object will handle the lifecycle of the internal buffer. */
+	/* If raised, the object will handle the lifecycle of the internal buffer. */
+	rbuffOwnedBuff = 1,
+	/* If raised, the object will not overwrite data in the buffer. */
+	rbuffNoOverwrite = 2,
 }RBuffFlag;
 
 /* Rotational Buff */

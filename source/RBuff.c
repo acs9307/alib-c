@@ -200,7 +200,10 @@ size_t RBuff_pushback(RBuff* rbuff, const void* buff, size_t count)
 	/* Pop items off if there are too many. */
 	if(count + buffCount > buffSize)
 	{
-		buffCount -= RBuff_popoff(rbuff, NULL, (count + buffCount) - buffSize);
+		if(rbuff->flags & rbuffNoOverwrite)
+			count = buffSize - buffCount;
+		else
+			buffCount -= RBuff_popoff(rbuff, NULL, (count + buffCount) - buffSize);
 	}
 
 	/* Copy first half */
@@ -232,11 +235,7 @@ size_t RBuff_pushback(RBuff* rbuff, const void* buff, size_t count)
 /* Pushes a byte onto the buffer. */
 alib_error RBuff_pushback_byte(RBuff* rbuff, uint8_t byte)
 {
-	if(!rbuff)return(ALIB_BAD_ARG);
-
-	*(uint8_t*)rbuff->itEnd = byte;
-	RBuff_increment_it(rbuff, 1);
-	return(ALIB_OK);
+	return(RBuff_pushback(rbuff, &byte, 1));
 }
 
 /* Resets the RBuff to its initialized state. */
