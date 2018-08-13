@@ -1,2 +1,9 @@
-To use the library in the arduino environment, simply include "Arduino_alib-c.h" to your 
-code.
+Make the library for arduino, by calling 
+
+	make arduino
+
+While this doesn't make an actual static library as a normal build will, it prepares it for the arduino environment, specifically the Visual Micro environment (believe it works with the normal arduino environ as well).  What this does is copies the source files into the main directory where the compiler looks for compiling and linking.  
+
+After preparing the library, simply include 'Arduino_alib-c.h' in your code and it will include all compatible alib code for you.
+
+When preparing the commit a change to the library, be sure to call 'arduino_prep_commit.sh' as it will copy all the source files to the '/source' directory for you, assuming you changed the source in the main directory.
