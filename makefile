@@ -64,6 +64,7 @@ all:
 	make install
 	
 arduino:
+	cp ./Arduino_alib-c.h ..
 	cp ./source/alib_cb_funcs.c .
 	cp ./source/alib_string.c .
 	cp ./source/alib_time.c .
