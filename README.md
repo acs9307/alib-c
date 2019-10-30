@@ -16,6 +16,11 @@ Making:
 		Arduino:
 			make arduino
 			
+Installation:
+	Arduino:
+		Place repo in 'alib-c' directory in your arduino library directory.  (i.e. This should be
+		in a directory heirarchy similar to 'Arduino/libraries/alib-c/alib-c/...')
+
 Notes for Modifying Files for Arduino:
 	When modifying files so for Arduino, it is suggested to modify the files in the main directory
 	and then call 'sh arduino_prep_commit.sh' before committing.  This will ensure your changes will 
