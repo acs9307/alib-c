@@ -62,18 +62,12 @@ install:
 all:
 	make alibc
 	make install
-	
-arduino:
-	cp ./Arduino_alib-c.h ..
-	cp ./source/alib_cb_funcs.c .
-	cp ./source/alib_string.c .
-	cp ./source/alib_time.c .
-	cp ./source/alib_types.c .
-	cp ./source/DList.c .
-	cp ./source/DListItem.c .
-	cp ./source/Endianess.c .
-	cp ./source/ListItem.c .
-	cp ./source/ListItemVal.c .
-	
+
 clean:
 	rm -rf *.o *.c ancillary/ *.a
+	
+arduino:
+	./setup_arduino.py
+
+clean-arduino:
+	rm ../*.c ../includes

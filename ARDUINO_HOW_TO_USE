@@ -1,9 +1,15 @@
+Prerequisite:
+    Arduino IDE Environment Only:
+        Inside the libraries directory create a directory called 'alib-c', then copy entire library directory into there.  
+        After doing this you should have a directory structure of '...Arduino/libraries/alib-c/alib-c/{source_code}'.
+
 Make the library for arduino, by calling 
 
 	make arduino
 
-While this doesn't make an actual static library as a normal build will, it prepares it for the arduino environment, specifically the Visual Micro environment (believe it works with the normal arduino environ as well).  What this does is copies the source files into the main directory where the compiler looks for compiling and linking.  
+While this doesn't make an actual static library as a normal build will, it prepares it for the arduino environment.
+This was specifically setup for the Visual Micro environment (believe it works with the normal arduino environ as well).  
+What this does is create soft links to link to the actual source code underneath, putting those soft link files in a 
+specific structure, all for the purpose of making the arduino build environment happy.  
 
 After preparing the library, simply include 'Arduino_alib-c.h' in your code and it will include all compatible alib code for you.
-
-When preparing the commit a change to the library, be sure to call 'arduino_prep_commit.sh' as it will copy all the source files to the '/source' directory for you, assuming you changed the source in the main directory.
