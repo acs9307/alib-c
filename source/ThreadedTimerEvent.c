@@ -6,16 +6,15 @@ static void timer_loop(ThreadedTimerEvent* event)
 {
 	if(!event)return;
 
-	char rang;
 	struct timespec end_time;
 
 	flag_raise(&event->fp, THREAD_IS_RUNNING);
 	while(!(event->fp & THREAD_STOP))
 	{
-		TimerEvent_check((TimerEvent*)event, &rang);
+		TimerEvent_check((TimerEvent*)event, NULL);
 
 		/* Let anyone waiting know that we have rung. */
-		if(rang)
+		if(Timer_get_rung_state(event->timer))
 			pthread_cond_broadcast(&event->cond);
 
 		if(pthread_mutex_lock(&event->mutex))
