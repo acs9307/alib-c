@@ -33,3 +33,4 @@
 
 *.c
 !source/*.c
+*.swp

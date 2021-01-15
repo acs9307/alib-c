@@ -24,7 +24,7 @@ void String_clear(String* str)
 /* Clears the String, but will not free any internal memory.
  * This gives a performance boost when the String is used
  * multiple times before being destroyed. */
-void Stirng_clear_no_free(String* str)
+void String_clear_no_free(String* str)
 {
 	if(str)
 	{
