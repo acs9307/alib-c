@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install debians.
-sudo apt install doxygen
+sudo apt install doxygen cmake
 
 MAIN_DIR=/tmp/git
 mkdir -p $MAIN_DIR 
