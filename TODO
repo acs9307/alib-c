@@ -1,3 +1,7 @@
+Support passing CFLAGS.
+
+Add support for stack based objects (i.e. provide init functions so objects can be used without dynamic memory).
+
 Give DList a sorting function. 
 
 Fix race condition with 'free_proc_waiter()'.  Sticks on some platforms.  Looks like 'wait' returns before a condition is raised?
