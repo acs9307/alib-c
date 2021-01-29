@@ -1,5 +1,3 @@
-Support passing CFLAGS.
-
 Add support for stack based objects (i.e. provide init functions so objects can be used without dynamic memory).
 
 Give DList a sorting function. 
