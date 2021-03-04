@@ -59,4 +59,5 @@ target_include_directories(alibc PUBLIC
 	includes
 )
 
-install(TARGETS alibc)
+install(TARGETS alibc 
+		DESTINATION /usr/local/lib/)
