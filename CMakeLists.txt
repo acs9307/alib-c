@@ -60,4 +60,5 @@ target_include_directories(alibc PUBLIC
 )
 
 install(TARGETS alibc 
-		DESTINATION /usr/local/lib/)
+	DESTINATION /usr/local/lib/)
+install(DIRECTORY includes/ DESTINATION /usr/local/include/alib-c)
