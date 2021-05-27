@@ -20,15 +20,23 @@ Below is the list of libraries linked to and where you can find them.
 	zlib: https://github.com/madler/zlib
 
 ----------------------------------------------------------------------------------------------
-Making
+Building
 
-To make the project follow the commands below...
+To build the project follow the commands below...
 	Linux:
-		make
-		sudo make install
+		CMake:
+			mkdir build
+			cd build
+			cmake ..
+			make
+			sudo make install
 
-		...or simply
-		make all
+		Auto Make (Deprecated):
+			make
+			sudo make install
+
+			...or simply
+			make all
 	
 	Arduino:
 		make arduino
