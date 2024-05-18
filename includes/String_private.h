@@ -1,7 +1,7 @@
 #ifndef STRING_PRIVATE_IS_DEFINED
 #define STRING_PRIVATE_IS_DEFINED
 
-#include "String.h"
+#include "StringObject.h"
 #include "BinaryBuffer_private.h"
 
 /* Simple object inherited from BinaryBuffer.  Handles basic string operations

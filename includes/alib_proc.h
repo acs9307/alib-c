@@ -3,7 +3,7 @@
 
 #include "alib_file.h"
 #include "BinaryBuffer.h"
-#include "String.h"
+#include "StringObject.h"
 
 /* Returns the PIDs of applications with a name matching 'procName'.
  *

@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h> // Include the header file that defines struct timeval
 
 #include "alib_error.h"
 

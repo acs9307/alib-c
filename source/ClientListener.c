@@ -77,15 +77,23 @@ static alib_error init_epoll_tsafe(ClientListener* listener)
 /* Adds a single socket to the epoll list. */
 static alib_error add_sock_to_epoll(struct epoll_pack* pack, int sock)
 {
+	alib_error err = ALIB_OK;
 	if(!pack || sock < 0 || pack->efd < 0)return(ALIB_BAD_ARG);
 
 	pack->event.data.fd = sock;
+
 	pack->event.events = EPOLLIN;
-	if(epoll_ctl(pack->efd, EPOLL_CTL_ADD, sock,
-			&pack->event) < 0)
-		return(ALIB_UNKNOWN_ERR);
-	else
-		return(ALIB_OK);
+	#ifdef __APPLE__
+		struct kevent ev;
+		EV_SET(&ev, sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
+		if (kevent(pack->efd, &ev, 1, NULL, 0, NULL) < 0)
+			err = ALIB_UNKNOWN_ERR;
+	#else
+		if (epoll_ctl(pack->efd, EPOLL_CTL_ADD, sock, &pack->event) < 0)
+			err = ALIB_UNKNOWN_ERR;
+	#endif
+
+	return(err);
 }
 /* Thread safe version of 'add_sock_to_epoll()'. */
 static alib_error add_sock_to_epoll_tsafe(ClientListener* listener, int sock)

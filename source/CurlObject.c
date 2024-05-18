@@ -95,29 +95,29 @@ int CurlObject_post(CurlObject* c_obj, char** headers,
 	return(err);
 }
 
-/* Returns a StringObject of the received data from the connection.
+/* Returns a String of the received data from the connection.
  *
  * If no data is immediately available, the call will fail.
  * Returned value MUST be freed by the caller.
  *
  * Returns:
  * 		NULL: Failure or error.
- * 		StringObject*: A newly allocated string object containing
+ * 		String*: A newly allocated string object containing
  * 			the received data. */
-StringObject* CurlObject_recv(CurlObject* c_obj)
+String* CurlObject_recv(CurlObject* c_obj)
 {
-	StringObject* str;
+	String* str;
 	const size_t buff_size = 8 * 1024;
 	char buff[8 * 1024];
 	size_t recv_count;
 
 	if(!c_obj)return(NULL);
 
-	str = newStringObject();
+	str = newString();
 	if(!str)return(NULL);
 
 	while(curl_easy_recv(c_obj->curl, buff, buff_size, &recv_count) == CURLE_OK)
-		str->append_count(str, buff, recv_count);
+        String_append_count(str, buff, recv_count);
 
 	return(str);
 }
