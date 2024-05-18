@@ -3,22 +3,22 @@
 
 void proc_wait_cb(int pid, int status, void* user_data)
 {
-	StringObject* str = (StringObject*)user_data;
-	printf("%s\n", str->str);
+	String* str = (String*)user_data;
+	printf("%s\n", String_get_c_string(str));
 }
 
 void test1()
 {
 	printf("Test 1 started!\n");
 
-	StringObject* all = newStringObject();
-	StringObject* first = newStringObject();
-	StringObject* second = newStringObject();
+	String* all = newString();
+	String* first = newString();
+	String* second = newString();
 	int pid1, pid2;
 
-	all->append(all, "A child processed died.");
-	first->append(first, "The first child process died.");
-	second->append(second, "The second child process died.");
+	String_append(all, "A child processed died.");
+	String_append(first, "The first child process died.");
+	String_append(second, "The second child process died.");
 
 	proc_waiter_register(-1, proc_wait_cb, all);
 
@@ -68,14 +68,14 @@ void test3()
 {
 	printf("Test 3 started!\n");
 
-	StringObject* all = newStringObject();
-	StringObject* first = newStringObject();
-	StringObject* second = newStringObject();
+	String* all = newString();
+	String* first = newString();
+	String* second = newString();
 	int pid1, pid2;
 
-	all->append(all, "A child processed died.");
-	first->append(first, "A child processed died.2");
-	second->append(second, "A child processed died.3");
+	String_append(all, "A child processed died.");
+	String_append(first, "A child processed died.2");
+	String_append(second, "A child processed died.3");
 
 	proc_waiter_register(-1, proc_wait_cb, all);
 	proc_waiter_register(-1, proc_wait_cb, first);

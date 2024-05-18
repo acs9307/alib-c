@@ -4,8 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     command: sh -c "cd /alib-c/ && mkdir -p build && cd build && cmake .. && make all && ./unit_tests"
-        #command: sh -c "cd /alib-c/ && mkdir -p build && cd build && cmake .. && make all"
         #entrypoint: ["tail", "-f", "/dev/null"]
-      #entrypoint: ["cd /alib-c/ && mkdir -p build && cd build && cmake .. && make all"]
     volumes:
       - ./:/alib-c

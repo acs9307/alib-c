@@ -3,7 +3,7 @@
 set -e
 
 # Install debians.
-sudo apt install -y doxygen cmake git
+sudo apt update && apt-get install -y build-essential doxygen cmake git
 
 MAIN_DIR=/tmp/git
 mkdir -p $MAIN_DIR 
