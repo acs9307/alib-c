@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 3.10)
 project (alibc_project C)
 
+set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC" )
+
 add_library(alibc 
 	source/alib_cb_funcs.c
 	source/alib_dir.c
@@ -35,7 +38,6 @@ add_library(alibc
 	source/server_structs.c
 	source/signal_handler.c
 	source/String.c
-	source/StringObject.c
 	source/StrParser.c
 	source/StrRef.c
 	source/TcpClient.c
@@ -62,3 +64,12 @@ target_include_directories(alibc PUBLIC
 install(TARGETS alibc 
 	DESTINATION /usr/local/lib/)
 install(DIRECTORY includes/ DESTINATION /usr/local/include/alib-c)
+
+# Add the unit test build
+add_executable(unit_tests
+	tests/unit-tests/test_DList.c
+	# Add more test files here
+)
+
+# Link the library to the unit test build
+target_link_libraries(unit_tests PRIVATE alibc)

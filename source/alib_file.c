@@ -39,16 +39,16 @@ char mkdir_ex(const char* dir, mode_t mode, char recurs)
 		return(mkdir(dir, mode));
 	else
 	{
-		StringObject* dir_str = newStringObject();
+		String* dir_str = newString();
 		char rval;
 		char* ptr;
 
 		/* Check for error in allocating memory. */
 		if(!dir_str)return(-1);
-		dir_str->append(dir_str, dir);
+		String_append(dir_str, dir);
 
 		/* Ensure that the last character is a null terminator. */
-		ptr = dir_str->str + dir_str->length - 1;
+		ptr = String_get_c_string(dir_str) + String_get_length(dir_str) - 1;
 		while(*ptr == '/' || *ptr == '\\')
 		{
 			*ptr = '\0';
@@ -56,18 +56,18 @@ char mkdir_ex(const char* dir, mode_t mode, char recurs)
 		}
 
 		/* Iterate through the string and create each directory. */
-		for(ptr = dir_str->str + 1;*ptr != '\0'; ++ptr)
+		for(ptr = String_get_c_string(dir_str) + 1;*ptr != '\0'; ++ptr)
 		{
 			if(*ptr == '/' || *ptr == '\\')
 			{
 				*ptr = '\0';
-				mkdir(dir_str->str, mode);
+				mkdir(String_get_c_string(dir_str), mode);
 				*ptr = '/';
 			}
 		}
-		rval = mkdir(dir_str->str, mode);
+		rval = mkdir(String_get_c_string(dir_str), mode);
 
-		delStringObject(&dir_str);
+		delString(&dir_str);
 		return(rval);
 	}
 }

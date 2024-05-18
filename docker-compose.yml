@@ -1,0 +1,9 @@
+services:
+  alib-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "cd /alib-c/ && mkdir -p build && cd build && cmake .. && make all && ./unit_tests"
+        #entrypoint: ["tail", "-f", "/dev/null"]
+    volumes:
+      - ./:/alib-c
