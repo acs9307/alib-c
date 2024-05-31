@@ -102,9 +102,11 @@ alib_error DList_insert(DList* list, size_t index, DListItem* item)
  *             newItm: The item to insert.  This item's parent MUST BE NULL. */
 alib_error DList_insert_after(DList* list, DListItem* curItm, DListItem* newItm)
 {
-       if(!list || !curItm || curItm->base.parent != list ||
-                       !newItm || !newItm->base.parent)
+       if(!list || !curItm || (curItm->base.parent != list) ||
+                       !newItm || newItm->base.parent)
+		{
                return(ALIB_BAD_ARG);
+		}
 
        if(DListItem_insert_after(curItm, newItm) == curItm)
                return(ALIB_UNKNOWN_ERR);
