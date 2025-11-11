@@ -31,8 +31,10 @@
 # Debug files
 *.dSYM/
 
+# Source files (exclude all except those in source/ and tests/)
 *.c
 !source/*.c
+!tests/*.c
 *.swp
 build/
 Testing/
