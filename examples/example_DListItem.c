@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "DListItem.h"
+#include "ListItemVal.h"
+
 
 void print_list(DListItem* li, char* ptr_name)
 {
@@ -13,7 +15,7 @@ void print_list(DListItem* li, char* ptr_name)
 	printf("list contents:\n");
 		li = DListItem_get_first_item(li);
 		for(; li; li = DListItem_get_next_item(li))
-			printf("\t%s\n", (char*)((ListItemVal*)li)->value);
+			printf("\t%s\n", (char*)(ListItemVal_get_value((ListItemVal*)li)));
 
 	printf("\n");
 }
@@ -37,7 +39,7 @@ int main()
 	print_list(ha, "ha");
 
 	printf("---PullOut---\n");
-	hw = DListItem_get(hw, 2);
+	hw = DListItem_get(hw, 2, NULL);
 	wu = DListItem_pull_out(&hw);
 	ha = DListItem_pull_out_count(&hw, 2);
 	printf("wu - count: %d, val: %s\n", (int)DListItem_count(wu),
@@ -55,10 +57,10 @@ int main()
 	hw = DListItem_get_by_value(hw, hello_world);
 	printf("hw value = %s, hw index = %d\n", (char*)DListItem_get_value(hw),
 			DListItem_index(hw));
-	wu = DListItem_get_by_relative_index(hw, 1);
+	wu = DListItem_get_by_relative_index(hw, 1, NULL);
 	printf("wu value = %s, wu index = %d\n", (char*)DListItem_get_value(wu),
 			DListItem_index(wu));
-	ha = DListItem_get_by_relative_index(hw, -2);
+	ha = DListItem_get_by_relative_index(hw, -2, NULL);
 	printf("ha value = %s, ha index = %d\n", (char*)DListItem_get_value(ha),
 			DListItem_index(ha));
 

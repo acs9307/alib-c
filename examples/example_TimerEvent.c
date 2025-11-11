@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "String.h"
+#include "StringObject.h"
 #include "Timer.h"
 #include "TimerEvent.h"
 

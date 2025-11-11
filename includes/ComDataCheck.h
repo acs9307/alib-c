@@ -8,7 +8,7 @@
 
 #include "alib_sockets.h"
 #include "BinaryBuffer.h"
-#include "String.h"
+#include "StringObject.h"
 #include "server_defines.h"
 
 /* Used during data transmission so that the receiver knows if all

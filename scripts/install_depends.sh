@@ -2,7 +2,8 @@
 set -e  # Exit on error
 
 # Install debian packages
-sudo apt-get install -y doxygen cmake pkg-config
+sudo apt-get update
+sudo apt-get install -y build-essential doxygen cmake pkg-config git
 
 MAIN_DIR=/tmp/git
 mkdir -p $MAIN_DIR
@@ -20,7 +21,7 @@ git clone https://github.com/madler/zlib
 
 # Make json-c
 echo "Building json-c..."
-cd json-c
+cd ${MAIN_DIR}/json-c
 mkdir -p build
 cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
@@ -29,7 +30,7 @@ sudo make install
 
 # Make zlib
 echo "Building zlib..."
-cd ../../zlib
+cd ${MAIN_DIR}/zlib
 ./configure --prefix=/usr/local
 make -j$(nproc)
 sudo make install
