@@ -35,3 +35,4 @@
 !source/*.c
 *.swp
 build/
+Testing/
