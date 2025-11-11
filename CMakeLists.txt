@@ -55,7 +55,6 @@ add_library(alibc
 	source/server_structs.c
 	source/signal_handler.c
 	source/String.c
-	source/StringObject.c
 	source/StrParser.c
 	source/StrRef.c
 	source/TcpClient.c

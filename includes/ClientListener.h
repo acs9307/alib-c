@@ -2,7 +2,13 @@
 #define CLIENT_LISTENER_IS_DEFINED
 
 #include <pthread.h>
+#ifdef __linux__
 #include <sys/epoll.h>
+// Linux-specific code here
+#elif __APPLE__
+#include <sys/event.h>
+// macOS-specific code here
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>

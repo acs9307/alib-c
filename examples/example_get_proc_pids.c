@@ -7,7 +7,7 @@
 int main()
 {
 	int* pids, *pidIt;
-	int pidCount = get_proc_pids((const char*[]){"/home/gurtha/workspace-cpp/alib-c/Debug/alib-c", "bash", NULL}, &pids);
+	int pidCount = get_proc_pids((const char*[]){"/home/gurtha/workspace-cpp/alib-c/Debug/alib-c", "bash", NULL}, 2, &pids);
 
 	printf("%d pids found.\n", pidCount);
 	printf("Found pids:\n");

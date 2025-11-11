@@ -50,10 +50,11 @@ static void FdServer_proc()
 {
 	FdServer* server;
 	ClientListener* listener = newClientListener(NULL, NULL);
-	ClientListener_set_client_data_ready_cb(listener, listener_data_ready);
-	ClientListener_set_client_data_in_cb(listener, listener_data_in);
-	ClientListener_set_client_disconnected_cb(listener, listener_disconnected);
-	ClientListener_set_client_list_emtpy_cb(listener, client_list_empty);
+	ClientListener_set_client_data_ready_cb(listener, (cl_client_data_ready_cb)listener_data_ready);
+	ClientListener_set_client_data_in_cb(listener, (cl_client_data_in_cb)listener_data_in);
+	ClientListener_set_client_disconnected_cb(listener, (cl_client_disconnected_cb)listener_disconnected);
+	ClientListener_set_client_list_empty_cb(listener, (cl_client_list_empty_cb)client_list_empty);
+	
 
 	remove("/tmp/001");
 	server = newFdServer("/tmp/001", 0, NULL, fd_received);

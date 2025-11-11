@@ -1,5 +1,5 @@
 #include "ArrayList.h"
-#include "String.h"
+#include "StringObject.h"
 #include <stdio.h>
 
 void print_array_data(ArrayList* list)

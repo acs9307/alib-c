@@ -7,9 +7,9 @@ char sigint_called = 0;
 char sigabort_called = 0;
 void sig_handler(int signum, void* user_data)
 {
-	StringObject* str = (StringObject*)user_data;
+	String* str = (String*)user_data;
 
-	printf("%d: %s\n", signum, str->str);
+	printf("%d: %s\n", signum, String_get_c_string(str));
 
 	++sigint_called;
 //	if(sigint_called > 1)
@@ -17,21 +17,21 @@ void sig_handler(int signum, void* user_data)
 }
 void sig_abort(int signum, void* user_data)
 {
-	StringObject* str = (StringObject*)user_data;
+	String* str = (String*)user_data;
 
-	printf("%d: %s\n", signum, str->str);
+	printf("%d: %s\n", signum, String_get_c_string(str));
 	sigabort_called++;
 }
 
 int main()
 {
-	StringObject* str1 = newStringObject();
-	StringObject* str2 = newStringObject();
-	StringObject* str3 = newStringObject();
+	String* str1 = newString();
+	String* str2 = newString();
+	String* str3 = newString();
 
-	str1->append(str1, "Hello world!");
-	str2->append(str2, "Hey there!");
-	str3->append(str3, "Abort called!");
+	String_append(str1, "Hello world!");
+	String_append(str2, "Hey there!");
+	String_append(str3, "Abort called!");
 
 	signal_handler_register(SIGINT, sig_handler, str1);
 	signal_handler_register(SIGINT, sig_handler, str2);

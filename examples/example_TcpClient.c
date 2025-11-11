@@ -21,7 +21,7 @@ void client_proc()
 	TcpClient* client = newTcpClient("127.0.0.1", 7777, NULL, NULL);
 
 	printf("TcpClient_connect(): %d\n", TcpClient_connect(client));
-	TcpClient_set_data_in_cb(client, data_in);
+	TcpClient_set_data_in_cb(client, (tc_data_in)data_in);
 	TcpClient_set_disconnect_cb(client, disconnect);
 
 #if 1
@@ -70,7 +70,7 @@ f_return:
 server_cb_rval reply_proc(TcpServer* server, socket_package* client, char* data,
 		size_t data_len)
 {
-	printf("reply proc: %d\n", send(client->sock, data, data_len, 0));
+	printf("reply proc: %lu\n", send(client->sock, data, data_len, 0));
 	return(SCB_RVAL_DEFAULT);
 }
 server_cb_rval client_disconnected(TcpServer* server, socket_package* client)
@@ -85,7 +85,7 @@ void server_proc()
 {
 	TcpServer* server = newTcpServer(7777, NULL, NULL);
 
-	TcpServer_set_client_data_in_cb(server, reply_proc);
+	TcpServer_set_client_data_in_cb(server, (ts_client_data_in_cb)reply_proc);
 	TcpServer_set_client_disconnected_cb(server, client_disconnected);
 	//TcpServer_set_client_connected_cb(server, client_connected);
 	TcpServer_start(server);

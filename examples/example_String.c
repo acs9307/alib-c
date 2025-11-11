@@ -1,4 +1,4 @@
-#include "String.h"
+#include "StringObject.h"
 
 void print_strings(String* str1, String* str2)
 {
