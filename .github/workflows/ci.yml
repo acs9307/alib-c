@@ -1,0 +1,201 @@
+name: CI Build and Test
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+
+jobs:
+  build-cmake:
+    name: Build with CMake
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+        build_type: [Debug, Release]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake doxygen
+
+    - name: Install library dependencies
+      run: |
+        cd scripts
+        bash install_depends.sh
+
+    - name: Create build directory
+      run: cmake -E make_directory ${{github.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}/build
+      run: |
+        cmake ${{github.workspace}} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DCMAKE_C_FLAGS="-Wall -Wextra -Werror"
+
+    - name: Build
+      working-directory: ${{github.workspace}}/build
+      run: cmake --build . --config ${{ matrix.build_type }} -j$(nproc)
+
+    - name: Install
+      working-directory: ${{github.workspace}}/build
+      run: sudo cmake --install .
+
+    - name: Verify library installation
+      run: |
+        test -f /usr/local/lib/libalibc.a || (echo "Library not installed" && exit 1)
+        echo "Library successfully installed at /usr/local/lib/libalibc.a"
+
+  build-make:
+    name: Build with Make (Legacy)
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Install library dependencies
+      run: |
+        cd scripts
+        bash install_depends.sh
+
+    - name: Build with Make
+      run: make -j$(nproc)
+
+    - name: Verify build output
+      run: |
+        test -f libalibc.a || (echo "Library not built" && exit 1)
+        echo "Library successfully built: libalibc.a"
+
+    - name: Clean
+      run: make clean
+
+  build-examples:
+    name: Build Examples
+    runs-on: ubuntu-22.04
+    needs: build-cmake
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake doxygen
+
+    - name: Install library dependencies
+      run: |
+        cd scripts
+        bash install_depends.sh
+
+    - name: Build and install library
+      run: |
+        cmake -E make_directory build
+        cd build
+        cmake ..
+        cmake --build . -j$(nproc)
+        sudo cmake --install .
+
+    - name: Build examples
+      working-directory: ${{github.workspace}}/examples
+      run: |
+        # Build all C examples
+        for example in *.c; do
+          if [ -f "$example" ]; then
+            output="${example%.c}"
+            echo "Building $example -> $output"
+            gcc -o "$output" "$example" \
+              -I/usr/local/include \
+              -L/usr/local/lib \
+              -lalibc \
+              -lpthread \
+              -lm \
+              -ljson-c \
+              -lz || exit 1
+          fi
+        done
+        echo "All examples built successfully"
+
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install analysis tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck clang-tidy
+
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=warning,style,performance,portability \
+          --error-exitcode=0 \
+          --inline-suppr \
+          --suppress=missingIncludeSystem \
+          --quiet \
+          source/ includes/ 2>&1 | tee cppcheck-report.txt
+
+        # Show results but don't fail the build on warnings (can adjust later)
+        echo "Cppcheck analysis complete"
+
+    - name: Check for common issues
+      run: |
+        # Check for tabs vs spaces consistency
+        echo "Checking code formatting..."
+
+        # Check for trailing whitespace
+        if grep -r '[[:blank:]]$' source/ includes/ --include='*.c' --include='*.h' > /dev/null; then
+          echo "Warning: Trailing whitespace found (not failing build)"
+        fi
+
+        # Check for proper header guards (informational)
+        echo "Checking header guards..."
+        missing_guards=0
+        for header in includes/*.h; do
+          if [ -f "$header" ]; then
+            basename=$(basename "$header" .h)
+            guard_name=$(echo "$basename" | tr '[:lower:]' '[:upper:]' | tr '.' '_')
+            if ! grep -q "#ifndef.*$guard_name" "$header" 2>/dev/null; then
+              missing_guards=$((missing_guards + 1))
+            fi
+          fi
+        done
+
+        if [ $missing_guards -gt 0 ]; then
+          echo "Info: $missing_guards header files may be missing header guards"
+        fi
+
+        echo "Code quality checks complete"
+
+  pipeline-success:
+    name: All Checks Passed
+    runs-on: ubuntu-22.04
+    needs: [build-cmake, build-make, build-examples, static-analysis]
+
+    steps:
+    - name: Success
+      run: |
+        echo "================================================"
+        echo "All pipeline checks passed successfully!"
+        echo "================================================"
+        echo "✓ CMake builds (Debug & Release)"
+        echo "✓ Make build (Legacy)"
+        echo "✓ Examples compilation"
+        echo "✓ Static analysis"
+        echo "================================================"
