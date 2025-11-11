@@ -178,10 +178,9 @@ static void event_prep_to_free(TimerEvent* event)
 /* Loop for checking the timer events.  If an event is fired, then
  * the callback will be called and the event will be placed back into
  * the list where it belongs. */
-static void* timer_loop(void* arg)
+static void timer_loop_impl(TimerEventHandler* handler)
 {
-	TimerEventHandler* handler = (TimerEventHandler*)arg;
-	if(!handler)return NULL;
+	if(!handler)return;
 
 	DListItem* itm;
 	char rang;
@@ -227,6 +226,12 @@ static void* timer_loop(void* arg)
 f_return:
 	pthread_mutex_unlock(&handler->mutex);
 	flag_lower(&handler->fp, THREAD_IS_RUNNING);
+}
+
+/* Pthread wrapper for timer_loop_impl */
+static void* timer_loop_wrapper(void* arg)
+{
+	timer_loop_impl((TimerEventHandler*)arg);
 	return NULL;
 }
 	/**********************/
@@ -254,7 +259,7 @@ alib_error TimerEventHandler_start(TimerEventHandler* handler)
 	/* Start the thread. */
 	flag_lower(&handler->fp, THREAD_STOP);
 	flag_raise(&handler->fp, THREAD_CREATED);
-	if(pthread_create(&handler->thread, NULL, timer_loop, handler))
+	if(pthread_create(&handler->thread, NULL, timer_loop_wrapper, handler))
 	{
 		/* Error occurred while trying to start the thread. */
 		flag_lower(&handler->fp, THREAD_CREATED);

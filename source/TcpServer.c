@@ -259,13 +259,12 @@ f_return:
 }
 
 /* Starts the listening thread for the server. */
-static void* start_thread(void* arg)
+static void start_thread_impl(EpollPack* ep)
 {
-	EpollPack* ep = (EpollPack*)arg;
-	if(!ep)return NULL;
+	if(!ep)return;
 
 	TcpServer* server = (TcpServer*)EpollPack_get_user_data(ep);
-	if(!server)return NULL;
+	if(!server)return;
 
 	flag_raise(&server->flag_pole, THREAD_IS_RUNNING);
 	pthread_cond_broadcast(&server->event_cond);
@@ -301,6 +300,12 @@ f_cleanup:
 	/* Cleanup. */
 	if(ep)
 		delEpollPack(&ep);
+}
+
+/* Pthread wrapper for start_thread_impl */
+static void* start_thread_wrapper(void* arg)
+{
+	start_thread_impl((EpollPack*)arg);
 	return NULL;
 }
 /*******************************/
@@ -385,7 +390,7 @@ alib_error TcpServer_start_async(TcpServer* server)
 	/* Start the thread. */
 	flag_lower(&server->flag_pole, THREAD_STOP);
 	flag_raise(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
-	if(pthread_create(&server->event_thread, NULL, start_thread, ep))
+	if(pthread_create(&server->event_thread, NULL, start_thread_wrapper, ep))
 	{
 		flag_lower(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
 		err = ALIB_THREAD_ERR;
