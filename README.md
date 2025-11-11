@@ -24,7 +24,7 @@ Building
 
 To build the project follow the commands below...
 	Linux:
-		CMake:
+		CMake (Recommended):
 			mkdir build
 			cd build
 			cmake ..
@@ -37,10 +37,32 @@ To build the project follow the commands below...
 
 			...or simply
 			make all
-	
+
 	Arduino:
 		make arduino
-			
+
+----------------------------------------------------------------------------------------------
+Testing
+
+A comprehensive test suite is included to ensure code quality and correctness.
+
+To build and run tests:
+	mkdir build
+	cd build
+	cmake ..
+	make
+	ctest --output-on-failure
+
+To disable tests during build:
+	cmake -DBUILD_TESTS=OFF ..
+
+For more information, see tests/README.md
+
+Test Coverage:
+	- 187 unit tests covering core modules
+	- 100% pass rate
+	- Tests for string utilities, data structures, memory management, and time operations
+
 ----------------------------------------------------------------------------------------------
 Installation
 

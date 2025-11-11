@@ -4,6 +4,9 @@ project (alibc_project C)
 set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC" )
 
+# Option to build tests
+option(BUILD_TESTS "Build test suite" ON)
+
 add_library(alibc 
 	source/alib_cb_funcs.c
 	source/alib_dir.c
@@ -62,6 +65,15 @@ target_include_directories(alibc PUBLIC
 	includes
 )
 
-install(TARGETS alibc 
+install(TARGETS alibc
 	DESTINATION /usr/local/lib/)
 install(DIRECTORY includes/ DESTINATION /usr/local/include/alib-c)
+
+# Enable testing and add tests subdirectory
+if(BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(tests)
+	message(STATUS "Building with tests enabled")
+else()
+	message(STATUS "Building without tests (use -DBUILD_TESTS=ON to enable)")
+endif()
