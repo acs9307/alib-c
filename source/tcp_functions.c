@@ -17,7 +17,7 @@ alib_error tcp_send_data_by_host(const char* host_address, uint16_t port,
 {
 	int sock = -1, err = 0;
 	struct sockaddr_in host_addr;
-	size_t send_count;
+	ssize_t send_count;
 	struct hostent* host;
 
 	/* Allocate the socket. */

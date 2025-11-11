@@ -29,6 +29,7 @@ typedef struct proc_waiter
 /*******Private Functions*******/
 static void* thread_proc(void* unused)
 {
+	(void)unused;  /* Intentionally unused parameter */
 	int status;
 	int pid;
 	proc_waiter** pw_it;

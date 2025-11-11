@@ -63,7 +63,7 @@ alib_error BinaryBuffer_hard_resize(BinaryBuffer* buff, size_t new_size)
  */
 alib_error BinaryBuffer_expand(BinaryBuffer* buff)
 {
-	size_t new_cap;
+	size_t new_cap = 0;
 
 	/* Ensure we can expand. */
 	if(!buff)return(ALIB_BAD_ARG);
@@ -168,8 +168,8 @@ alib_error BinaryBuffer_append_file(BinaryBuffer* buff, FILE* file)
        if((rval = BinaryBuffer_expand_to_target(buff, buff->len + fileLen)))
                return(rval);
 
-       rval = fread(buff->buff + buff->len, 1, fileLen, file);
-       if(rval < fileLen)
+       size_t bytes_read = fread(buff->buff + buff->len, 1, fileLen, file);
+       if(bytes_read < fileLen)
                return(ALIB_FILE_READ_ERR);
 
        buff->len += fileLen;

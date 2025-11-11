@@ -11,7 +11,7 @@ void test_strcpy_safe() {
     ASSERT_STR_EQUAL(source, buffer, "strcpy_safe should copy string correctly");
 
     // Test overlapping copy (to comes after from)
-    char overlap[] = "1234567890";
+    char overlap[20] = "1234567890";
     strcpy_safe(overlap + 3, overlap);
     ASSERT_STR_EQUAL("1234567890", overlap + 3, "strcpy_safe should handle overlapping strings (to after from)");
 }

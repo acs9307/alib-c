@@ -2,7 +2,7 @@
 
 /*******Private Functions*******/
 /* Main loop for the thread. */
-static void timer_loop(ThreadedTimerEvent* event)
+static void timer_loop_impl(ThreadedTimerEvent* event)
 {
 	if(!event)return;
 
@@ -29,6 +29,13 @@ static void timer_loop(ThreadedTimerEvent* event)
 
 	pthread_cond_broadcast(&event->cond);
 	pthread_cond_broadcast(&event->cond);
+}
+
+/* Pthread wrapper for timer_loop_impl */
+static void* timer_loop_wrapper(void* arg)
+{
+	timer_loop_impl((ThreadedTimerEvent*)arg);
+	return NULL;
 }
 /*******************************/
 
@@ -58,7 +65,7 @@ alib_error ThreadedTimerEvent_start(ThreadedTimerEvent* event)
 	/* Start the thread. */
 	flag_lower(&event->fp, THREAD_STOP);
 	flag_raise(&event->fp, THREAD_CREATED);
-	if(pthread_create(&event->thread, NULL, (pthread_proc)timer_loop, event))
+	if(pthread_create(&event->thread, NULL, timer_loop_wrapper, event))
 	{
 		/* Error occurred while trying to start the thread. */
 		flag_lower(&event->fp, THREAD_CREATED);

@@ -5,6 +5,7 @@
  * an operation.
  *
  * Returns: True if a recovery took place. */
+__attribute__((unused))
 static uint8_t _recover(RBuffIt* it)
 {
 	uint8_t rval = 0;

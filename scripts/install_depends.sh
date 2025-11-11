@@ -1,29 +1,42 @@
 #!/bin/bash
+set -e  # Exit on error
 
-set -e
-
-# Install debians.
-sudo apt update && apt-get install -y build-essential doxygen cmake git
+# Install debian packages
+sudo apt-get update
+sudo apt-get install -y build-essential doxygen cmake pkg-config git
 
 MAIN_DIR=/tmp/git
-mkdir -p $MAIN_DIR 
+mkdir -p $MAIN_DIR
 
-cd $MAIN_DIR 
+cd $MAIN_DIR
+
+# Clean up any existing directories to avoid conflicts
+rm -rf json-c zlib
+
+# Clone repositories
+echo "Cloning json-c..."
+git clone https://github.com/json-c/json-c
+echo "Cloning zlib..."
+git clone https://github.com/madler/zlib
 
 # Make json-c
-cd ${MAIN_DIR}
-git clone https://github.com/json-c/json-c
+echo "Building json-c..."
 cd ${MAIN_DIR}/json-c
 mkdir -p build
 cd build
-cmake ..
-make
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+make -j$(nproc)
 sudo make install
 
 # Make zlib
-cd ${MAIN_DIR}
-git clone https://github.com/madler/zlib
-cd zlib
-./configure
-make
+echo "Building zlib..."
+cd ${MAIN_DIR}/zlib
+./configure --prefix=/usr/local
+make -j$(nproc)
 sudo make install
+
+# Update library cache so the linker can find the libraries
+echo "Updating library cache..."
+sudo ldconfig
+
+echo "Dependencies installed successfully!"

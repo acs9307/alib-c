@@ -232,7 +232,7 @@ int deflate_btf(const unsigned char* buff, size_t buff_len, FILE* dest, int leve
 			goto f_return;
 
 		have = ZIP_CHUNK - strm.avail_out;
-		if(fwrite(out, 1, have, dest) != have || ferror(dest))
+		if(fwrite(out, 1, have, dest) != (size_t)have || ferror(dest))
 		{
 			rval = Z_ERRNO;
 			goto f_return;
@@ -533,7 +533,7 @@ int inflate_btf(const unsigned char* buff, size_t buff_len, FILE* dest)
 		}
 
 		have = ZIP_CHUNK - strm.avail_out;
-		if(fwrite(out, 1, have, dest) != have || ferror(dest))
+		if(fwrite(out, 1, have, dest) != (size_t)have || ferror(dest))
 		{
 			rval = Z_ERRNO;
 			goto f_return;

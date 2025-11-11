@@ -168,7 +168,7 @@ char ListHistory_member_function_push_back(ListHistory* hist, void* item, void(*
 	MutexObject_unlock(hist->mutex);
 #endif
 
-	if(hist->max > 0 && hist->count > hist->max)
+	if(hist->max > 0 && hist->count > (unsigned int)hist->max)
 		ListHistory_member_function_pop_off(hist);
 
 	return(LIST_HISTORY_OK);

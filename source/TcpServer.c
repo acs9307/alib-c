@@ -259,7 +259,7 @@ f_return:
 }
 
 /* Starts the listening thread for the server. */
-static void start_thread(EpollPack* ep)
+static void start_thread_impl(EpollPack* ep)
 {
 	if(!ep)return;
 
@@ -300,6 +300,13 @@ f_cleanup:
 	/* Cleanup. */
 	if(ep)
 		delEpollPack(&ep);
+}
+
+/* Pthread wrapper for start_thread_impl */
+static void* start_thread_wrapper(void* arg)
+{
+	start_thread_impl((EpollPack*)arg);
+	return NULL;
 }
 /*******************************/
 
@@ -383,7 +390,7 @@ alib_error TcpServer_start_async(TcpServer* server)
 	/* Start the thread. */
 	flag_lower(&server->flag_pole, THREAD_STOP);
 	flag_raise(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
-	if(pthread_create(&server->event_thread, NULL, (pthread_proc)start_thread, ep))
+	if(pthread_create(&server->event_thread, NULL, start_thread_wrapper, ep))
 	{
 		flag_lower(&server->flag_pole, THREAD_CREATED | THREAD_IS_RUNNING);
 		err = ALIB_THREAD_ERR;

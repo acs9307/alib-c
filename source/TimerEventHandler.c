@@ -2,6 +2,16 @@
 #include "includes/ListItemVal_private.h"
 
 /*******Private Functions*******/
+/* Wrapper for TimerEvent callbacks to match pthread signature */
+static void* timer_event_callback_wrapper(void* arg)
+{
+	TimerEvent* event = (TimerEvent*)arg;
+	TimerEvent_rang_cb cb = TimerEvent_get_rang_cb(event);
+	if(cb)
+		cb(event);
+	return NULL;
+}
+
 /* Adds an event to the event list.  This is done without locking the mutex
  * as it will be called from within the processing thread.
  *
@@ -94,6 +104,7 @@ static void extract_event(TimerEventHandler* handler, TimerEvent* event)
 
 	pthread_cond_broadcast(&handler->cond);
 }
+__attribute__((unused))
 static void sort_events(TimerEventHandler* handler)
 {
 	if(!handler)return;
@@ -146,7 +157,7 @@ static void timer_rang(TimerEvent* event)
 		 * detach the thread. */
 		pthread_t cbThread;
 		if(pthread_create(&cbThread, NULL,
-				(pthread_proc)TimerEvent_get_rang_cb(event),
+				timer_event_callback_wrapper,
 				event) == 0)
 		{
 			pthread_detach(cbThread);
@@ -167,7 +178,7 @@ static void event_prep_to_free(TimerEvent* event)
 /* Loop for checking the timer events.  If an event is fired, then
  * the callback will be called and the event will be placed back into
  * the list where it belongs. */
-static void timer_loop(TimerEventHandler* handler)
+static void timer_loop_impl(TimerEventHandler* handler)
 {
 	if(!handler)return;
 
@@ -216,6 +227,13 @@ f_return:
 	pthread_mutex_unlock(&handler->mutex);
 	flag_lower(&handler->fp, THREAD_IS_RUNNING);
 }
+
+/* Pthread wrapper for timer_loop_impl */
+static void* timer_loop_wrapper(void* arg)
+{
+	timer_loop_impl((TimerEventHandler*)arg);
+	return NULL;
+}
 	/**********************/
 /*******************************/
 
@@ -241,7 +259,7 @@ alib_error TimerEventHandler_start(TimerEventHandler* handler)
 	/* Start the thread. */
 	flag_lower(&handler->fp, THREAD_STOP);
 	flag_raise(&handler->fp, THREAD_CREATED);
-	if(pthread_create(&handler->thread, NULL, (pthread_proc)timer_loop, handler))
+	if(pthread_create(&handler->thread, NULL, timer_loop_wrapper, handler))
 	{
 		/* Error occurred while trying to start the thread. */
 		flag_lower(&handler->fp, THREAD_CREATED);
