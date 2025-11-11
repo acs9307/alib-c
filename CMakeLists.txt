@@ -22,7 +22,7 @@ add_library(alibc
 	source/DList.c
 	source/DListItem.c
 	source/EpollPack.c
-	source/ErrorLogger.c
+#	source/ErrorLogger.c
 #	source/EventServer.c
 	source/FdClient.c
 	source/FdServer.c
