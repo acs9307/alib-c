@@ -23,12 +23,12 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake doxygen
+        sudo apt-get install -y build-essential cmake doxygen pkg-config
 
     - name: Install library dependencies
       run: |
         cd scripts
-        bash install_depends.sh
+        bash -x install_depends.sh
 
     - name: Create build directory
       run: cmake -E make_directory ${{github.workspace}}/build
@@ -46,12 +46,16 @@ jobs:
 
     - name: Install
       working-directory: ${{github.workspace}}/build
-      run: sudo cmake --install .
+      run: |
+        sudo cmake --install .
+        sudo ldconfig
 
     - name: Verify library installation
       run: |
         test -f /usr/local/lib/libalibc.a || (echo "Library not installed" && exit 1)
         echo "Library successfully installed at /usr/local/lib/libalibc.a"
+        echo "Installed headers:"
+        ls -la /usr/local/include/alib-c/ | head -20
 
   build-make:
     name: Build with Make (Legacy)
@@ -64,12 +68,12 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential
+        sudo apt-get install -y build-essential pkg-config
 
     - name: Install library dependencies
       run: |
         cd scripts
-        bash install_depends.sh
+        bash -x install_depends.sh
 
     - name: Build with Make
       run: make -j$(nproc)
@@ -94,12 +98,12 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake doxygen
+        sudo apt-get install -y build-essential cmake doxygen pkg-config
 
     - name: Install library dependencies
       run: |
         cd scripts
-        bash install_depends.sh
+        bash -x install_depends.sh
 
     - name: Build and install library
       run: |
@@ -108,6 +112,7 @@ jobs:
         cmake ..
         cmake --build . -j$(nproc)
         sudo cmake --install .
+        sudo ldconfig
 
     - name: Build examples
       working-directory: ${{github.workspace}}/examples
