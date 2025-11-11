@@ -50,7 +50,7 @@ ancil_send_fds_with_buffer(int sock, const int *fds, unsigned n_fds, void *buffe
     char nothing = '!';
     struct iovec nothing_ptr;
     struct cmsghdr *cmsg;
-    int i;
+    unsigned int i;
 
     nothing_ptr.iov_base = &nothing;
     nothing_ptr.iov_len = 1;

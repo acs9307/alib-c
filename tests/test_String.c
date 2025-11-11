@@ -1,5 +1,5 @@
 #include "test_framework.h"
-#include "../includes/String.h"
+#include "../includes/StringObject.h"
 #include "../includes/String_private.h"
 #include <string.h>
 

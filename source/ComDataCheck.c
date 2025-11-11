@@ -10,9 +10,9 @@ int ComDataCheck_check(ComDataCheck* cdc)
 	if(cdc->input)
 	{
 		size_t buff_len = BinaryBuffer_get_length(cdc->buff);
-		if(buff_len < cdc->data_len)
+		if(buff_len < (size_t)cdc->data_len)
 			return(CDC_WAITING);
-		else if(buff_len == cdc->data_len)
+		else if(buff_len == (size_t)cdc->data_len)
 			return(CDC_COMPLETE);
 		else
 		{
@@ -197,8 +197,9 @@ alib_error ComDataCheck_send(const ComDataCheck* cdc, int sock, int flags)
 		return(ALIB_FILE_WRITE_ERR);
 	}
 
+	size_t buff_len = BinaryBuffer_get_length(cdc->buff);
 	if(send(sock, BinaryBuffer_get_raw_buff(cdc->buff),
-			BinaryBuffer_get_length(cdc->buff), flags) != BinaryBuffer_get_length(cdc->buff))
+			buff_len, flags) != (ssize_t)buff_len)
 	{
 		return(ALIB_FILE_WRITE_ERR);
 	}

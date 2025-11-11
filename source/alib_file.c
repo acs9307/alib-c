@@ -1,4 +1,5 @@
 #include "includes/alib_file.h"
+#include "includes/String_private.h"
 
 /*------------FILE SEARCHING------------*/
 
@@ -48,7 +49,8 @@ char mkdir_ex(const char* dir, mode_t mode, char recurs)
 		String_append(dir_str, dir);
 
 		/* Ensure that the last character is a null terminator. */
-		ptr = String_get_c_string(dir_str) + String_get_length(dir_str) - 1;
+		/* Access internal buffer directly for modification */
+		ptr = (char*)dir_str->base.buff + String_get_length(dir_str) - 1;
 		while(*ptr == '/' || *ptr == '\\')
 		{
 			*ptr = '\0';
@@ -56,7 +58,7 @@ char mkdir_ex(const char* dir, mode_t mode, char recurs)
 		}
 
 		/* Iterate through the string and create each directory. */
-		for(ptr = String_get_c_string(dir_str) + 1;*ptr != '\0'; ++ptr)
+		for(ptr = (char*)dir_str->base.buff + 1;*ptr != '\0'; ++ptr)
 		{
 			if(*ptr == '/' || *ptr == '\\')
 			{
