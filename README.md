@@ -9,15 +9,23 @@ safe, there is no way to free an object in a thread safe manner.
 ----------------------------------------------------------------------------------------------
 Dependencies
 
-There are several libraries that are linked to during compilation.  These are optional, however to turn them off requires you modify the make file so that it does not compile the source linking to said libraries.
+Required:
+	zlib: https://github.com/madler/zlib
+		Used for compression support
+
+Optional:
+	json-c: https://github.com/json-c/json-c
+		Required only for ErrorLogger module
+		Enable with: cmake -DBUILD_ERROR_LOGGER=ON ..
 
 To install dependencies, you can either install them manually or use the automated script to assist.  To run the script, run...
 
-	./scripts/install_depends.sh 
+	./scripts/install_depends.sh
 
-Below is the list of libraries linked to and where you can find them.
-	json-c: https://github.com/json-c/json-c
-	zlib: https://github.com/madler/zlib
+Or install manually:
+	Ubuntu/Debian: sudo apt-get install zlib1g-dev libjson-c-dev
+	Fedora/RHEL:   sudo dnf install zlib-devel json-c-devel
+	macOS:         brew install zlib json-c
 
 ----------------------------------------------------------------------------------------------
 Building
@@ -31,12 +39,24 @@ To build the project follow the commands below...
 			make
 			sudo make install
 
+		With ErrorLogger support (requires json-c):
+			mkdir build
+			cd build
+			cmake -DBUILD_ERROR_LOGGER=ON ..
+			make
+			sudo make install
+
 		Auto Make (Deprecated):
 			make
 			sudo make install
 
 			...or simply
 			make all
+
+	Docker (Recommended for Testing):
+		See DOCKER.md for containerized build and test instructions
+		docker build -t alib-c:latest .
+		docker run --rm alib-c:latest
 
 	Arduino:
 		make arduino
