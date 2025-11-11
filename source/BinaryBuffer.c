@@ -63,7 +63,7 @@ alib_error BinaryBuffer_hard_resize(BinaryBuffer* buff, size_t new_size)
  */
 alib_error BinaryBuffer_expand(BinaryBuffer* buff)
 {
-	size_t new_cap;
+	size_t new_cap = 0;
 
 	/* Ensure we can expand. */
 	if(!buff)return(ALIB_BAD_ARG);
