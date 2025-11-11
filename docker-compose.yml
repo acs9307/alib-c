@@ -1,9 +1,27 @@
+version: '3.8'
+
 services:
-  alib-build:
+  alib-c-dev:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh -c "cd /alib-c/ && mkdir -p build && cd build && cmake .. && make all && ./unit_tests"
-        #entrypoint: ["tail", "-f", "/dev/null"]
     volumes:
-      - ./:/alib-c
+      - .:/workspace/alib-c
+      - build-cache:/workspace/alib-c/build
+    working_dir: /workspace/alib-c
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+
+  alib-c-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace/alib-c
+      - build-cache:/workspace/alib-c/build
+    working_dir: /workspace/alib-c
+    command: sh -c "cd build && ctest --output-on-failure --verbose"
+
+volumes:
+  build-cache:
